@@ -1,21 +1,24 @@
-import numpy as np
-
 class Operator:
     def __init__(self,operation=''):
         self.op = operation.upper()
         print(self.op)
 
-    def __mul__(self,op2):
-        return self.op + op2.op
+    def __mul__(self,other):
+        return self.op + other.op
 
+    def __str__(self):
+        return self.op
 
 class Pauli(Operator):
-    def __inv__(self):
+    def __invert__(self):
         return self.op
 
 class Identity(Operator):
-    def __mul__(self,op2):
-        return op2.op
+    def __mul__(self,other):
+        return other.op
+
+    def __invert__(self):
+        return self.op
     
 class Ladder(Operator):
     def __init__(self,operation):
@@ -28,14 +31,3 @@ class Ladder(Operator):
         self.op = self.values[self.ind]
         return self.op
 
-
-pauliX = Operator('x')
-pauliY = Operator('y')
-pauliZ = Pauli('Z')
-I = Identity('')
-plus = Ladder('+')
-print(~Ladder)
-
-print(pauliX * pauliY)
-print(pauliX * pauliZ)
-print(pauliX * I)
