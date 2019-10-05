@@ -116,6 +116,10 @@ class Operator:
             return self
 
     def getSingle(self,other,new,sign=1):
+        """
+        Handle factor and imaginary part of multiplication 
+        of two operators when single operator is the product.
+        """
         op1 = Operator(new)
         i,factor = self.mulcopy(other)
         op1.factor = factor*sign
@@ -182,4 +186,4 @@ class Operator:
             if self.op == '-':
                 op2.factor *= -1
             return [op1,op2]
-            
+
