@@ -28,6 +28,7 @@ class Operator:
                 op_ind = 3 - (self.ind + other.ind)
                 i,factor = mulcopy(other)
                 self.op = self.pauli[op_ind]
+                self.check_ind()
                 self.im = i
                 self.factor = factor
                 self.im = not self.im
@@ -47,6 +48,7 @@ class Operator:
                     return getSingle(other,other.op,fact)
             else: # If identity
                 self.op += other.op
+                self.check_ind()
                 i,factor = mulcopy(other)
                 self.im = i
                 self.factor = factor
@@ -76,6 +78,7 @@ class Operator:
                     return getSingle(other,self.op,fact)
             else: #If identity
                 self.op += other.op
+                self.check_ind()
                 i,factor = mulcopy(other)
                 self.im = i
                 self.factor = factor
@@ -84,6 +87,7 @@ class Operator:
         # OTHER/IDENTITY
         else:
             self.op += other.op
+            self.check_ind()
             i,factor = mulcopy(other)
             self.im = i
             self.factor = factor
@@ -110,10 +114,20 @@ class Operator:
         if self.op in self.ladder:
             self.ind = (self.ind + 1)%2
             self.op = self.ladder[self.ind]
+            if self.im:
+                self.factor *= -1
             return self.op
         # OTHER/ IDENTITY PAULI
         else:
+            if self.im:
+                self.factor *= -1
             return self
+
+    def check_ind(self):
+        if self.op in self.pauli:
+            self.ind = self.pauli.index(self.op)
+        if self.op in self.ladder:
+            self.ind = self.ladder.index(self.op)
 
     def getSingle(self,other,new,sign=1):
         """
