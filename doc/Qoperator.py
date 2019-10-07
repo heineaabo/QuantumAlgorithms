@@ -1,3 +1,272 @@
+import numpy as np
+from operator import *
+from copy import deepcopy
+
+class OperatorList:
+    def __init__(self,size):
+        self.size = size
+        self.factor = 1
+
+
+    def append(self,i,operator):
+        exec('self.op{} = operator'.format(i))
+
+    def get(self,i):
+        
+        return(eval('self.op{}'.format(i)))
+
+    def replace(self,i,operator):
+        A = deepcopy(self)
+        exec('A.op{} = operator'.format(i))
+        return(A)
+
+    def __mul__(self,obj2):
+        new_list = OperatorList(self.size)
+        for i in range(self.size):
+            op = self.get(i)*obj2.get(i)
+            if op == 0:
+                return(0)
+            else:
+                new_list.append(i,op)
+        return(new_list)
+            
+    def __eq__(self,obj2):
+        for i in range(self.size):
+            if self.get(i).op != obj2.get(i).op:
+                return(False)
+        return(True)
+
+    def calculate_factor(self):
+        f = complex(1,0)
+        for i in range(self.size):
+            if self.get(i).im:
+                f *= complex(0,self.get(i).factor)
+            else:
+                f *= complex(self.get(i).factor,0)
+        self.factor = f
+
+        
+
+    def defactor(self):
+        check = True
+        tot = [self]
+        while check:
+            counter = 0
+            tot2 = []
+            for oplist in tot:
+                for i in range(self.size):
+                    if type(oplist.get(i)) == list:
+                        list1 = oplist.replace(i,self.get(i)[0])
+                        list2 = oplist.replace(i,self.get(i)[1])
+                        tot2.append(list1)
+                        tot2.append(list2)
+                        counter += 1
+                        break
+            
+            if counter == 0:
+                check = False
+            else:
+                tot = tot2
+        return(tot)
+            
+
+class Hamiltonian:
+    def __init__(self,n_qubits):
+        self.n_qubits = n_qubits
+
+    def remove_identity(self,res):
+        n_qubits = self.n_qubits
+        res2 = []
+        for oplist in res:
+            count = 0
+            for i in range(n_qubits):
+                if oplist.get(i).op == '':
+                    count += 1
+            if count != n_qubits:
+                res2.append(oplist)
+        return(res2)
+    def calculate_factor(self,res):
+        res2 = []
+        for oplist in res:
+            oplist.calculate_factor()
+            if oplist.factor != 0:
+                res2.append(oplist)
+        return(res2)
+
+    def add_equals(self,res):
+        tot = []
+        while len(res) > 0:
+            res1 = deepcopy(res[0])
+            f = res1.factor
+            del res[0]
+            res_copy = deepcopy(res)
+            del_list = []
+            for j in range(len(res_copy)):
+                res2 = res_copy[j]
+                if res1 == res2:
+                    f += res2.factor
+
+                    del_list.append(j)
+            for i in sorted(del_list, reverse=True):
+                del res[i]
+            res1.factor = f
+            if f != 0:
+                tot.append(res1)
+        return(tot)
+
+
+
+    def get_circuits(self,h_pq,h_pqrs,remove_identity=True):
+        n_qubits = self.n_qubits
+        result = []
+        for p in range(n_qubits):
+            for q in range(n_qubits):
+                if h_pq[p,q] != 0:
+
+                    t_ob1 = OperatorList(n_qubits)
+                    t_ob2 = OperatorList(n_qubits)
+
+                    for i in range(p):
+                        t_ob1.append(i,Operator('z'))
+                    t_ob1.append(p,Operator('+'))
+                    for i in range(p+1,self.n_qubits):
+                        t_ob1.append(i,Operator('I'))
+
+                    for i in range(q):
+                        t_ob2.append(i,Operator('z'))
+                    t_ob2.append(q,Operator('-'))
+                    for i in range(q+1,self.n_qubits):
+                        t_ob2.append(i,Operator('I'))
+                    
+                    res = t_ob1*t_ob2
+
+                    
+                    res = res.defactor()
+
+                    if remove_identity:
+                        res = self.remove_identity(res)
+
+                    for oplist in res:
+                        oplist.calculate_factor()
+
+                    
+                    res2 = []
+                    for oplist in res:
+                        oplist.factor *= h_pq[p,q]
+                        res2.append(oplist)
+                    
+                    
+
+                    result.extend(res2)
+
+                for r in range(n_qubits):
+                    for s in range(r+1,n_qubits):
+                        if p == q or r == s or h_pqrs[p,q,r,s] == 0 or q < p:
+                            continue
+
+                        
+                        t1 = OperatorList(n_qubits)
+                        t2 = OperatorList(n_qubits)
+                        t3 = OperatorList(n_qubits)
+                        t4 = OperatorList(n_qubits)
+
+                        for i in range(p):
+                            t1.append(i,Operator('z'))
+                        t1.append(p,Operator('+'))
+                        for i in range(p+1,self.n_qubits):
+                            t1.append(i,Operator('I'))
+
+                        for i in range(q):
+                            t2.append(i,Operator('z'))
+                        t2.append(q,Operator('+'))
+                        for i in range(q+1,self.n_qubits):
+                            t2.append(i,Operator('I'))
+
+                        for i in range(s):
+                            t3.append(i,Operator('z'))
+                        t3.append(s,Operator('-'))
+                        for i in range(s+1,self.n_qubits):
+                            t3.append(i,Operator('I'))
+
+                        for i in range(r):
+                            t4.append(i,Operator('z'))
+                        t4.append(r,Operator('-'))
+                        for i in range(r+1,self.n_qubits):
+                            t4.append(i,Operator('I'))
+
+                        
+                        res = t1*t2
+                        
+                        
+                        res = res.defactor()
+                        
+
+
+                        res2 = []
+                        for oplist in res:
+                            res2.append(oplist*t3)
+                        res = res2
+                        
+                        
+                        res2 = []
+                        for oplist in res:
+                            res2.extend(oplist.defactor())
+                            
+                           
+                        res = res2
+                        res2 = []
+                        for oplist in res:
+                            res2.append(oplist*t4)
+
+                        
+                        res = res2
+                        res2 = []
+                        for oplist in res:
+                            res2.extend(oplist.defactor())
+
+                        if remove_identity:
+                            res2 = self.remove_identity(res2)
+                        
+                        
+
+                        res = res2
+                        res2 = []
+                        for oplist in res:
+                            new_list = OperatorList(n_qubits)
+                            for i in range(n_qubits):
+                                new_list.append(i,oplist.get(i).ladder2pauli())
+                            res2.append(new_list)
+                        res = res2
+                        res2 = []
+                        for oplist in res:
+                            res2.extend(oplist.defactor())
+
+                        if remove_identity:
+                            res2 = self.remove_identity(res2)
+
+                        for oplist in res2:
+                            oplist.calculate_factor()
+
+                        res = res2
+                        res2 = []
+                        for oplist in res:
+                            oplist.factor *= 4*h_pqrs[p,q,r,s]
+                            res2.append(oplist)
+
+
+                        result.extend(res2)
+        
+        result = self.add_equals(result)
+        return(result)
+
+
+
+
+
+
+
+
+
 class Operator:
     def __init__(self,operation):
         self.op = operation.lower()
@@ -162,7 +431,6 @@ class Operator:
         else:
             op1.im = i
             op2.im = i
-        print(op1.factor)
         return [op1,op2]
 
     def mulcopy(self,other):
@@ -184,7 +452,7 @@ class Operator:
     
     def ladder2pauli(self):
         if self.op not in self.ladder:
-            print('Operator is not ladder')
+            #print('Operator is not ladder')
             return self
         else:
             op1 = Operator('x')
@@ -200,4 +468,9 @@ class Operator:
             if self.op == '-':
                 op2.factor *= -1
             return [op1,op2]
+
+
+
+
+
 
