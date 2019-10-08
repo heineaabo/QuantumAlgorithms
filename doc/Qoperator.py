@@ -307,13 +307,14 @@ class Operator:
             # LADDER
             elif other.op in self.ladder:
                 if self.op == 'x':
-                    z_fact = eval('{}1'.format(other.op))
+                    z_fact = eval('{}1'.format(other.ladder[(other.ind+1)%2]))
                     return getDouble(other,'I','z',0.5,z_fact)
                 if self.op == 'y':
-                    z_fact = eval('{}1'.format(other.op))
-                    return getDouble(other,'I','z',0.5,z_fact,imag=True) 
+                    z_fact = eval('{}1'.format(other.ladder[(other.ind+1)%2]))
+                    fact = eval('{}0.5'.format(other.op))
+                    return getDouble(other,'I','z',fact,z_fact,imag=True) 
                 if self.op == 'z':
-                    fact = eval('{}1'.format(other.ladder[(other.ind+1)%2]))
+                    fact = eval('{}1'.format(other.op))
                     return getSingle(other,other.op,fact)
             else: # If identity
                 self.op += other.op
@@ -332,18 +333,19 @@ class Operator:
                     """
                     last operator sign determines + or - for Z
                     """
-                    z_fact = eval('{}1'.format(other.op))
+                    z_fact = eval('{}1'.format(self.op))
                     return getDouble(other,'I','z',0.5,z_fact)
             # PAULI
             elif other.op in self.pauli:
                 if other.op == 'x':
-                    z_fact = eval('{}1'.format(other.ladder[(self.ind+1)%2]))
+                    z_fact = eval('{}1'.format(self.op))
                     return getDouble(other,'I','z',0.5,z_fact)
                 elif other.op == 'y':
-                    z_fact = eval('{}1'.format(other.ladder[(self.ind+1)%2]))
-                    return getDouble(other,'I','z',0.5,z_fact,imag=True) 
+                    z_fact = eval('{}1'.format(self.op))
+                    fact = eval('{}0.5'.format(self.op))
+                    return getDouble(other,'I','z',fact,z_fact,imag=True) 
                 elif other.op == 'z':
-                    fact = eval('{}1'.format(self.op))
+                    fact = eval('{}1'.format(self.ladder[(self.ind+1)%2]))
                     return getSingle(other,self.op,fact)
             else: #If identity
                 self.op += other.op
@@ -463,14 +465,10 @@ class Operator:
                 op2.im = False
             else:
                 op2.im = True
-            op1.factor *= self.factor
-            op2.factor *= self.factor
+            op1.factor *= self.factor*0.5
+            op2.factor *= self.factor*0.5
             if self.op == '-':
                 op2.factor *= -1
             return [op1,op2]
-
-
-
-
 
 
