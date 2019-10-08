@@ -163,7 +163,7 @@ class Hamiltonian:
                     for s in range(r+1,n_qubits):
                         if p == q or r == s or h_pqrs[p,q,r,s] == 0 or q < p:
                             continue
-
+                        print(p,q,r,s)
                         
                         t1 = OperatorList(n_qubits)
                         t2 = OperatorList(n_qubits)

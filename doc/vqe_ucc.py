@@ -2,7 +2,7 @@ import qiskit as qk
 import numpy as np
 from scipy.optimize import minimize
 from Qoperator import *
-qk.IBMQ.load_accounts()
+qk.IBMQ.load_account()
 
 
 
@@ -17,254 +17,258 @@ class VQE_UCC:
 
 	def wavefunction_ansatz(self,qc,qb,cb,t,measure=False):
 
-		n_qubits = self.n_qubits
-		n_fermi = self.n_fermi
-		t = t.reshape(self.n_fermi,self.n_fermi,self.n_qubits - self.n_fermi,self.n_qubits - self.n_fermi)
-		
-		
-		for i in range(n_fermi,n_qubits):
-			qc.x(qb[i])
+            n_qubits = self.n_qubits
+            n_fermi = self.n_fermi
+            t = t.reshape(self.n_fermi,self.n_fermi,self.n_qubits - self.n_fermi,self.n_qubits - self.n_fermi)
+            
+            
+            for i in range(n_fermi,n_qubits):
+                    qc.x(qb[i])
 
-		for i in range(n_fermi):
-			for j in range(i+1,n_fermi):
-				for a in range(n_fermi,n_qubits):
-					for b in range(a+1,n_qubits):
-						#TERM1
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.rz(np.pi/2,qb[b])
-						qc.h(qb[b])
+            for i in range(n_fermi):
+                for j in range(i+1,n_fermi):
+                    for a in range(n_fermi,n_qubits):
+                        for b in range(a+1,n_qubits):
+                            for k in range(i+1,j):
+                                qc.z(qb[k])
+                            for l in range(a+1,b):
+                                qc.z(qb[l])
+                            #TERM1
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.rz(np.pi/2,qb[b])
+                            qc.h(qb[b])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
-						qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+                            qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
-
-
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
-						qc.rz(-np.pi/2,qb[b])
-
-						#TERM2
-
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.rz(np.pi/2,qb[a])
-						qc.h(qb[a])
-						qc.h(qb[b])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
-
-						qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.rz(-np.pi/2,qb[a])
-						qc.h(qb[b])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
+                            qc.rz(-np.pi/2,qb[b])
+
+                            #TERM2
+
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.rz(np.pi/2,qb[a])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
+
+                            qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						#TERM3
-
-						qc.h(qb[i])
-						qc.rz(np.pi/2,qb[j])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
-
-						qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.rz(-np.pi/2,qb[a])
+                            qc.h(qb[b])
 
 
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.rz(-np.pi/2,qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
+                            #TERM3
 
-						#TERM4
+                            qc.h(qb[i])
+                            qc.rz(np.pi/2,qb[j])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
 
-						qc.h(qb[i])
-						qc.rz(np.pi/2,qb[j])
-						qc.h(qb[j])
-						qc.rz(np.pi/2,qb[a])
-						qc.h(qb[a])
-						qc.rz(np.pi/2,qb[b])
-						qc.h(qb[b])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
 
-						qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.rz(-np.pi/2,qb[j])
-						qc.h(qb[a])
-						qc.rz(-np.pi/2,qb[a])
-						qc.h(qb[b])
-						qc.rz(-np.pi/2,qb[b])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.rz(-np.pi/2,qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
 
-						#TERM5
+                            #TERM4
 
-						qc.rz(np.pi/2,qb[i])
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
+                            qc.h(qb[i])
+                            qc.rz(np.pi/2,qb[j])
+                            qc.h(qb[j])
+                            qc.rz(np.pi/2,qb[a])
+                            qc.h(qb[a])
+                            qc.rz(np.pi/2,qb[b])
+                            qc.h(qb[b])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
-						qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+                            qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
-
-
-						qc.h(qb[i])
-						qc.rz(-np.pi/2,qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
-
-						#TERM6
-
-						qc.rz(np.pi/2,qb[i])
-						qc.h(qb[i])
-						qc.h(qb[j])
-						qc.rz(np.pi/2,qb[a])
-						qc.h(qb[a])
-						qc.rz(np.pi/2,qb[b])
-						qc.h(qb[b])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
-
-						qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
-
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						qc.h(qb[i])
-						qc.rz(-np.pi/2,qb[i])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.rz(-np.pi/2,qb[a])
-						qc.h(qb[b])
-						qc.rz(-np.pi/2,qb[b])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.rz(-np.pi/2,qb[j])
+                            qc.h(qb[a])
+                            qc.rz(-np.pi/2,qb[a])
+                            qc.h(qb[b])
+                            qc.rz(-np.pi/2,qb[b])
 
-						#TERM7
+                            #TERM5
 
-						qc.rz(np.pi/2,qb[i])
-						qc.h(qb[i])
-						qc.rz(np.pi/2,qb[j])
-						qc.h(qb[j])
-						qc.h(qb[a])
-						qc.rz(np.pi/2,qb[b])
-						qc.h(qb[b])
+                            qc.rz(np.pi/2,qb[i])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
-						qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+                            qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						qc.h(qb[i])
-						qc.rz(-np.pi/2,qb[i])
-						qc.h(qb[j])
-						qc.rz(-np.pi/2,qb[j])
-						qc.h(qb[a])
-						qc.h(qb[b])
-						qc.rz(-np.pi/2,qb[b])
+                            qc.h(qb[i])
+                            qc.rz(-np.pi/2,qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
 
-						#TERM8
+                            #TERM6
 
-						qc.rz(np.pi/2,qb[i])
-						qc.h(qb[i])
-						qc.rz(np.pi/2,qb[j])
-						qc.h(qb[j])
-						qc.rz(np.pi/2,qb[a])
-						qc.h(qb[a])
-						qc.h(qb[b])
+                            qc.rz(np.pi/2,qb[i])
+                            qc.h(qb[i])
+                            qc.h(qb[j])
+                            qc.rz(np.pi/2,qb[a])
+                            qc.h(qb[a])
+                            qc.rz(np.pi/2,qb[b])
+                            qc.h(qb[b])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
-						qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+                            qc.rz(-t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
 
-						qc.cx(qb[i],qb[n_qubits])
-						qc.cx(qb[j],qb[n_qubits])
-						qc.cx(qb[a],qb[n_qubits])
-						qc.cx(qb[b],qb[n_qubits])
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
 
 
-						qc.h(qb[i])
-						qc.rz(-np.pi/2,qb[i])
-						qc.h(qb[j])
-						qc.rz(-np.pi/2,qb[j])
-						qc.h(qb[a])
-						qc.rz(-np.pi/2,qb[a])
-						qc.h(qb[b])
-		if measure:
-			qc.measure(qb,cb)
-			job = qk.execute(qc, backend = qk.Aer.get_backend('qasm_simulator'), shots=self.shots)
-			result = job.result()
-			self.result = result.get_counts(qc)
+                            qc.h(qb[i])
+                            qc.rz(-np.pi/2,qb[i])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.rz(-np.pi/2,qb[a])
+                            qc.h(qb[b])
+                            qc.rz(-np.pi/2,qb[b])
+
+                            #TERM7
+
+                            qc.rz(np.pi/2,qb[i])
+                            qc.h(qb[i])
+                            qc.rz(np.pi/2,qb[j])
+                            qc.h(qb[j])
+                            qc.h(qb[a])
+                            qc.rz(np.pi/2,qb[b])
+                            qc.h(qb[b])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
+
+                            qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
+
+
+                            qc.h(qb[i])
+                            qc.rz(-np.pi/2,qb[i])
+                            qc.h(qb[j])
+                            qc.rz(-np.pi/2,qb[j])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
+                            qc.rz(-np.pi/2,qb[b])
+
+                            #TERM8
+
+                            qc.rz(np.pi/2,qb[i])
+                            qc.h(qb[i])
+                            qc.rz(np.pi/2,qb[j])
+                            qc.h(qb[j])
+                            qc.rz(np.pi/2,qb[a])
+                            qc.h(qb[a])
+                            qc.h(qb[b])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
+
+                            qc.rz(t[i,j,a-n_fermi,b-n_fermi]/8,qb[n_qubits])
+
+                            qc.cx(qb[i],qb[n_qubits])
+                            qc.cx(qb[j],qb[n_qubits])
+                            qc.cx(qb[a],qb[n_qubits])
+                            qc.cx(qb[b],qb[n_qubits])
+
+
+                            qc.h(qb[i])
+                            qc.rz(-np.pi/2,qb[i])
+                            qc.h(qb[j])
+                            qc.rz(-np.pi/2,qb[j])
+                            qc.h(qb[a])
+                            qc.rz(-np.pi/2,qb[a])
+                            qc.h(qb[b])
+            if measure:
+                    qc.measure(qb,cb)
+                    job = qk.execute(qc, backend = qk.Aer.get_backend('qasm_simulator'), shots=self.shots)
+                    result = job.result()
+                    self.result = result.get_counts(qc)
 
 	def calculate_energy(self,t,circuit_list):
 		n_nodes = self.n_fermi
@@ -283,7 +287,7 @@ class VQE_UCC:
 				if operation == '':
 					count += 1
 					continue
-				exec('qc.{}(qb[{}])'.format(operation,i))
+				eval('qc.{}(qb[{}])'.format(operation,i))
 				if operation == 'x':
 					qc.h(qb[i])
 				if operation == 'y':
@@ -332,11 +336,11 @@ class VQE_UCC:
 				operation = circuit.get(i).op
 				if operation == '':
 					continue
-				exec('qc.{}(qb[{}])'.format(operation,i))
+				eval('qc.{}(qb[{}])'.format(operation,i))
 				if operation == 'x':
 					qc.h(qb[i])
 				if operation == 'y':
-					qc.u1(-np.pi/2,qb[i])
+					qc.sdg(qb[i])
 					qc.h(qb[i])
 				indices.append(i)
 
@@ -369,7 +373,7 @@ class VQE_UCC:
 	def non_gradient_optimization(self):
 		t = np.random.rand(self.n_fermi*self.n_fermi*(self.n_qubits - self.n_fermi)*(self.n_qubits - self.n_fermi))
 
-		res = minimize(self.energy, t, method='COBYLA', options={'disp': True},tol=1e-12)
+		res = minimize(self.energy, t, method='Nelder-Mead', options={'disp': True},tol=1e-12)
 		print(res.x)
 		
 		print(self.result)
@@ -389,6 +393,7 @@ for p in range(0,n_qubits-1,2):
         h_pqrs[p,p+1,r,r+1] = -0.5*g
 
 Pairing = Hamiltonian(n_qubits)
+print('---------')
 
 circuit_list = Pairing.get_circuits(h_pq,h_pqrs)
 for oplist in circuit_list:
