@@ -7,12 +7,10 @@ class OperatorList:
         self.size = size
         self.factor = 1
 
-
     def append(self,i,operator):
         exec('self.op{} = operator'.format(i))
 
     def get(self,i):
-        
         return(eval('self.op{}'.format(i)))
 
     def replace(self,i,operator):
@@ -45,8 +43,17 @@ class OperatorList:
                 f *= complex(self.get(i).factor,0)
         self.factor = f
 
-        
+    def __str__(self):
+        print_string = ""
+        print_string += str(self.factor) + " "
+        for op in range(self.size):
+            if self.get(op).op == '':
+                print_string += 'I' + " "
+                continue
+            print_string += self.get(op).op + " "
+        return(print_string)
 
+    
     def defactor(self):
         check = True
         tot = [self]
@@ -116,7 +123,7 @@ class Hamiltonian:
 
 
 
-    def get_circuits(self,h_pq,h_pqrs,remove_identity=True):
+    def get_circuits(self,h_pq,h_pqrs,remove_identity=False):
         n_qubits = self.n_qubits
         result = []
         for p in range(n_qubits):
@@ -161,7 +168,7 @@ class Hamiltonian:
 
                 for r in range(n_qubits):
                     for s in range(r+1,n_qubits):
-                        if p == q or r == s or h_pqrs[p,q,r,s] == 0 or q < p:
+                        if q <= p or h_pqrs[p,q,r,s] == 0:
                             continue
                         print(p,q,r,s)
                         
@@ -199,6 +206,9 @@ class Hamiltonian:
                         
                         
                         res = res.defactor()
+
+                        for oplist in res:
+                            oplist.calculate_factor()
                         
 
 
@@ -218,6 +228,8 @@ class Hamiltonian:
                         for oplist in res:
                             res2.append(oplist*t4)
 
+                        for oplist in res:
+                            oplist.calculate_factor()
                         
                         res = res2
                         res2 = []
@@ -257,7 +269,21 @@ class Hamiltonian:
                         result.extend(res2)
         
         result = self.add_equals(result)
+        result = self.convert_list(result)
         return(result)
+
+    def convert_list(self,circuit_list):
+        new_list = []
+        n_I = 0
+        for circuit in circuit_list:
+            temp = [circuit.factor]
+            for op in range(circuit.size):
+                operator = circuit.get(op).op
+                if operator == '':
+                    continue
+                temp.append([op,operator])
+            new_list.append(temp)
+        return(new_list)
 
 
 
@@ -301,7 +327,7 @@ class Operator:
                 self.im = i
                 self.factor = factor
                 self.im = not self.im
-                if 3*self.ind + other.ind not in [1,5,6]:
+                if 3*self.ind + other.ind not in [2,3,7]:
                     self.factor *= -1
                 return self
             # LADDER
@@ -470,5 +496,17 @@ class Operator:
             if self.op == '-':
                 op2.factor *= -1
             return [op1,op2]
+
+
+
+
+        
+
+
+
+
+
+
+
 
 
