@@ -4,13 +4,10 @@ import qiskit as qk
 class UnitaryCoupledCluster:
     """
     Unitary Coupled Cluster ansatz, with optimized singles and doubles circuits.
+    Jordan-Wigner transformed operators.
     Assumes the convention:
         ❘0⟩ - occupied orbital.
         ❘1⟩ - unoccupied orbital.
-
-    Initialize class input parameters below.
-    Initialize state to Hartree-Fock state with prepare_Hartree_state(circuit,qregister)
-    Call class to perform UCC.
 
     Input:
             n (int): Number of particles.    
@@ -33,7 +30,8 @@ class UnitaryCoupledCluster:
         if 'D' not in self.trunc:
             self.num_D = 0
 
-    def __call__(self,qc,qb,theta):
+    def __call__(self,theta,qc,qb):
+        qc = self.prepare_Hartree_state(qc,qb)
         theta = self.sort_theta(theta)
         for rho in range(self.depth):
             if 'S' in self.trunc:
