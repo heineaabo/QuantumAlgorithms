@@ -25,22 +25,24 @@ class SPSA:
     def run(self,prnt=True):
         theta = self.theta
         for k in range(self.max_iter):
-            a_k = self.a/np.power(self.A+k+1,**self.alpha)
+            # Set gain variables
+            a_k = self.a/np.power(self.A+k+1,self.alpha)
             c_k = self.c/np.power(k+1,self.gamma)
+
             # Sample from Bernoulli distribution
             delta = 2*np.random.binomial(n=1,p=0.5,size=self.p) - 1
+
+            # Approximate gradient
             y_p = self.L(theta + c_k*delta)
             y_m = self.L(theta - c_k*delta)
             g = (y_p - y_m)/(2*c_k*delta)
-            theta = theta - a_k*g
-            #self.theta = theta
-            if prnt:
-                print('\u2329E\u232A =',self.L(self.theta))
 
-    #def run(self,prnt=True):
-    #    for i in range(self.max_iter):
-    #        self.iteration(prnt=prnt)
-    #    return self.theta
+            # Update parameters
+            theta = theta - a_k*g
+
+            if prnt:
+                print('\u2329E\u232A =',self.L(theta))
+
 
 
 
