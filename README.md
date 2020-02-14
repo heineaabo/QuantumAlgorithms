@@ -1,1 +1,1 @@
-# VQE
+# Variational Quantum Eigensolver
