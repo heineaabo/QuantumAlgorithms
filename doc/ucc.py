@@ -24,11 +24,11 @@ class UnitaryCoupledCluster:
         self.l = l
         self.trunc = trunc
         self.depth = depth
-        self.num_S, self.num_D = self.get_num_parameters()
-        if 'S' not in self.trunc:
-            self.num_S = 0
-        if 'D' not in self.trunc:
-            self.num_D = 0
+        #self.num_S, self.num_D = #self.get_num_parameters()
+        #if 'S' not in self.trunc:
+        #    self.num_S = 0
+        #if 'D' not in self.trunc:
+        #    self.num_D = 0
 
     def __call__(self,theta,qc,qb):
         qc = self.prepare_Hartree_state(qc,qb)
@@ -42,19 +42,36 @@ class UnitaryCoupledCluster:
             raise ValueError('Need to spesify correct UCC type')
         return qc
 
-    def get_num_parameters(self):
-        S = self.n*(self.l-self.n)
+    def new_parameters(self,h=None,v=None):
+        """
+        Define new parameters. If one-body and two-body integrals 
+        will return the MP2 cluster amplitudes. Else return random parameteres.
+        """
+        S = 0
         D = 0
-        for i in range(self.n):
-            for j in range(i+1,self.n):
+        params = []
+        if 'S' in self.trunc:
+            for i in range(self.n):
                 for a in range(self.n,self.l):
-                    for b in range(a+1,self.l):
-                        D += 1
-        return S,D
+                    S += 1
+                    if h != None and v != None:
+                        params.append(0)
 
-    def new_parameters(self):
-        return 2*np.pi*np.random.randn((self.num_S+self.num_D)*self.depth)
-
+        if 'D' in self.trunc:
+            for i in range(self.n):
+                for j in range(i+1,self.n):
+                    for a in range(self.n,self.l):
+                        for b in range(a+1,self.l):
+                            D += 1
+                            if h != None and v != None:
+                                t = (v[i,j,b,a]-v[i,j,a,b])/(h[i,i]+h[j,j]-h[a,a]-h[b,b])
+                                params.append(t)
+        self.num_S = S
+        self.num_D = D
+        if h != None and v != None:
+            return np.asarray(params)
+        else:
+            return 2*np.pi*np.random.randn((self.num_S+self.num_D)*self.depth)
 
     def prepare_Hartree_state(self,qc,qb):
         """
@@ -75,13 +92,12 @@ class UnitaryCoupledCluster:
         singles = self.num_S
         doubles = self.num_D
         assert len(theta) == (singles+doubles)*self.depth
-        #new_theta = [theta[:singles],theta[singles:]]
         thetaS = []
         thetaD = []
         for i in range(self.depth):
             thetaS.append(theta[(i*singles):(i+1)*singles])
-            thetaD.append(theta[(self.depth*singles + (i)*doubles):(self.depth*singles + (i+1)*doubles)])
-        #new_theta = [theta[:singles],theta[singles:]]
+            thetaD.append(theta[(self.depth*singles + (i)*doubles):\
+                                (self.depth*singles + (i+1)*doubles)])
         new_theta = [thetaS,thetaD]
         return new_theta
 
