@@ -1,1 +1,3 @@
-# Variational Quantum Eigensolver
+# Quantum Algorithms
+
+### Variational Quantum Eigensolver
