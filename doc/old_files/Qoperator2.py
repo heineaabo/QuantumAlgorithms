@@ -2,6 +2,14 @@ import numpy as np
 from operator import *
 from copy import deepcopy
 
+def print_info(p,q,r,s,M):
+    print('p q r s -> {} {} {} {}'.format(p,q,r,s))
+    print('Matrix elements:')
+    print('{} {} {} {} ==> {}'.format(p,q,r,s,M[p,q,r,s]))
+    print('{} {} {} {} ==> {}'.format(p,q,s,r,M[p,q,s,r]))
+    print('{} {} {} {} ==> {}'.format(q,p,r,s,M[q,p,r,s]))
+    print('{} {} {} {} ==> {}'.format(q,p,s,r,M[q,p,s,r]))
+
 class OperatorList:
     def __init__(self,size):
         self.size = size
@@ -23,7 +31,7 @@ class OperatorList:
         for i in range(self.size):
             op = self.get(i)*obj2.get(i)
             if op == 0:
-                return(0)
+                return(0) # SHOULD RETURN EMPTY OperatorList
             else:
                 new_list.append(i,op)
         return(new_list)
@@ -127,7 +135,7 @@ class Hamiltonian:
         n_qubits = self.n_qubits
         result = []
         for p in range(n_qubits):
-            for q in range(n_qubits):
+            for q in range(p+1,n_qubits):
                 if h_pq[p,q] != 0:
 
                     t_ob1 = OperatorList(n_qubits)
@@ -168,9 +176,12 @@ class Hamiltonian:
 
                 for r in range(n_qubits):
                     for s in range(r+1,n_qubits):
-                        if q <= p or h_pqrs[p,q,r,s] == 0:
+                #for r in range(n_qubits):
+                #    for s in range(n_qubits):
+                        #if q <= p or h_pqrs[p,q,r,s] == 0:
+                        if q <= p or np.isclose(h_pqrs[p,q,r,s],0):
                             continue
-                        print(p,q,r,s)
+                        #print_info(p,q,r,s,h_pqrs)
                         
                         t1 = OperatorList(n_qubits)
                         t2 = OperatorList(n_qubits)
@@ -204,7 +215,8 @@ class Hamiltonian:
                         
                         res = t1*t2
                         
-                        
+                        if type(res) == int: # res=t1*t2 can return 0
+                            continue
                         res = res.defactor()
 
                         for oplist in res:
@@ -263,6 +275,7 @@ class Hamiltonian:
                         res2 = []
                         for oplist in res:
                             oplist.factor *= 4*h_pqrs[p,q,r,s]
+                            #oplist.factor *= 0.5*h_pqrs[p,q,r,s]
                             res2.append(oplist)
 
 

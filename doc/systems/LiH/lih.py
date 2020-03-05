@@ -12,8 +12,8 @@ from openfermion.hamiltonians import MolecularData
 from openfermion.transforms import get_fermion_operator, get_sparse_operator, jordan_wigner
 from openfermion.utils import get_ground_state
 from openfermionpsi4 import run_psi4
-
-from quantum_circuit import QuantumCircuit,Hamiltonian
+sys.path.append('../../../../QuantumCircuitOptimizer')
+from quantum_circuit import QuantumCircuit,SecondQuantizedHamiltonian
 from quantum_circuit.utils import molecular2sec_quant
 
 # LiH atom
@@ -27,6 +27,8 @@ molecule = run_psi4(molecule,
                     run_scf=True,
                     run_fci=True)
 h_pq = molecule.one_body_integrals
+print(h_pq.shape)
+sys.exit()
 h_pqrs = molecule.two_body_integrals
 nuc_rep = molecule.nuclear_repulsion
 fci = molecule.fci_energy
@@ -35,13 +37,14 @@ hf = molecule.hf_energy
 # OpenFermion Hamiltonian
 active_space_start = 1
 active_space_stop = 3
-molecular_hamiltonian = molecule.get_molecular_hamiltonian(
-    occupied_indices=range(active_space_start),
-    active_indices=range(active_space_start, active_space_stop))
+molecular_hamiltonian = molecule.get_molecular_hamiltonian()
+    #occupied_indices=range(active_space_start),
+    #active_indices=range(active_space_start, active_space_stop))
 fermion_hamiltonian = get_fermion_operator(molecular_hamiltonian)
 qubit_hamiltonian = jordan_wigner(fermion_hamiltonian)
 qubit_hamiltonian.compress()
 #print('The Jordan-Wigner Hamiltonian in canonical basis follows:\n{}'.format(qubit_hamiltonian))
+print('OF found')
 
 #sparse_hamiltonian = get_sparse_operator(qubit_hamiltonian)
 #energy, state = get_ground_state(sparse_hamiltonian)
@@ -50,21 +53,27 @@ qubit_hamiltonian.compress()
 
 print(nuc_rep)
 print('FCI:',fci)
-l = molecule.n_electrons*2
-n = molecule.n_electrons
-print('system size: {}, {}'.format(n,l))
+#l = molecule.n_electrons*2
+#n = molecule.n_electrons
 h_pq[np.absolute(h_pq) < 1e-8] = 0.
-print(h_pq)
-print(h_pqrs.shape)
-sys.exit()
+#print(h_pq)
+#print(h_pqrs)
 
-LiH = Hamiltonian(n,l)
 one,two = molecular2sec_quant(h_pq,h_pqrs)
-LiH.set_integrals(h_pq,h_pqrs)#,nuclear_repulsion=nuc_rep)
+l = one.shape[0]
+n = int(l/2)
+print('system size: {}, {}'.format(n,l))
+LiH = SecondQuantizedHamiltonian(n,l)
+LiH.set_integrals(one,two,nuclear_repulsion=nuc_rep)
 LiH.get_circuit()
 circuit_list = LiH.circuit_list
-print(LiH)
+print('OpenFermion')
 print(qubit_hamiltonian)
+print('Min')
+for i in circuit_list: print(i)
+sys.exit()
+#print(LiH)
+#print(qubit_hamiltonian)
 
 ansatz = UnitaryCoupledCluster(n,l,'SD',1)
 theta = ansatz.new_parameters()

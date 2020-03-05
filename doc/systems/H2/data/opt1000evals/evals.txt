@@ -1,0 +1,55 @@
+For bond length 0.5
+    - now running Powell, 36 function evaluations
+    - now running Nelder-Mead, 1001 function evaluations
+    - now running Cobyla, 23 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 0.6
+    - now running Powell, 57 function evaluations
+    - now running Nelder-Mead, 32 function evaluations
+    - now running Cobyla, 21 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 0.7
+    - now running Powell, 47 function evaluations
+    - now running Nelder-Mead, 23 function evaluations
+    - now running Cobyla, 21 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 0.8
+    - now running Powell, 98 function evaluations
+    - now running Nelder-Mead, 1001 function evaluations
+    - now running Cobyla, 19 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 0.9
+    - now running Powell, 35 function evaluations
+    - now running Nelder-Mead, 1003 function evaluations
+    - now running Cobyla, 23 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.0
+    - now running Powell, 45 function evaluations
+    - now running Nelder-Mead, 1002 function evaluations
+    - now running Cobyla, 22 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.1
+    - now running Powell, 65 function evaluations
+    - now running Nelder-Mead, 1002 function evaluations
+    - now running Cobyla, 20 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.2000000000000002
+    - now running Powell, 56 function evaluations
+    - now running Nelder-Mead, 1001 function evaluations
+    - now running Cobyla, 24 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.3
+    - now running Powell, 60 function evaluations
+    - now running Nelder-Mead, 1002 function evaluations
+    - now running Cobyla, 20 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.4
+    - now running Powell, 43 function evaluations
+    - now running Nelder-Mead, 1002 function evaluations
+    - now running Cobyla, 22 function evaluations
+    - now running SPSA, 1052 function evaluations
+For bond length 1.5
+    - now running Powell, 51 function evaluations
+    - now running Nelder-Mead, 1001 function evaluations
+    - now running Cobyla, 22 function evaluations
+    - now running SPSA, 1052 function evaluations
