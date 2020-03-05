@@ -3,6 +3,7 @@ import qiskit as qk
 from qiskit.extensions.standard import *
 import random
 from ansatz import UnitaryCoupledCluster
+from attributes import QuantumComputer
 
 from tools import print_state,get_state_count
 
@@ -15,18 +16,25 @@ class VQE:
                  callback = {}):
         """
         Input:
-            n_qubits     (int) - Number of qubits, or orbitals.
-            n_fermi      (int) - Number of particles.
-            ancilla      (int) - Number of ancilla qubits
-            ansatz       (class) - Ansatz
-            circuit_list (List)  - List of circuits to be evaluated.
-            optimizer    (str)   - Method for scipy.optimize
-            shots        (int)   - Number of shots for qiskit.execute.
-            seed         (int)   - Seed for qiskit.execute.
-            max_energy ??
-            prnt         (bool)  - If to print result of each function evaluation.
-            count_states (bool)  - If to count number of legal and illegal 
-                                   states measured.
+            hamiltonian  (int)   - Hamiltonian with system information
+                                   and circuit_list.
+            ansatz       (class) - Ansatz.
+            ansatz_depth (class) - Ansatz depth of Trotter expansion.
+
+            options:
+                * seed         (int)  - Seed for simulator and transpiler.
+                * shots        (int)  - Number of execution shots.
+                * max_energy   (bool) - If maximum or minimum energy is of 
+                                        interest.
+                * backend      (str)  - Name of backend.
+                * device       (str)  - Name of IBMQ quantum computer.
+                * noise_model  (bool) - Noise model of device.
+                * coupling_map (bool) - Coupling map of device.
+
+            callback:
+                * print        (bool) - Print for every function evaluation.
+                * count_states (bool) - Count legal and illegal states for
+                                        all function evaluations.
         """
         self.n_qubits = hamiltonian.l
         self.n_fermi = hamiltonian.n
@@ -38,6 +46,10 @@ class VQE:
                                                 depth=ansatz_depth)
             self.theta = self.ansatz.new_parameters(hamiltonian.h,
                                                     hamiltonian.v)
+
+        #### Setup options
+        self.options = options
+        # For execution
         self.shots = 1000 if options.get('shots') == None\
                           else options.get('shots')
         self.seed = options.get('seed')
@@ -45,10 +57,20 @@ class VQE:
             from qiskit.aqua import aqua_globals
             aqua_globals.random_seed = self.seed
         self.max_energy = options.get('max_energy')
-        # Arbitrary optimization class
+        # For optimization
         if options.get('optimizer') != None:
             self.optimizer = options.get('optimizer')
             self.optmizer.set_loss_function(self.expval)
+        # For Backend
+        if options.get('backend') == None:
+            options['backend'] = 'qasm_simulator' 
+        self.backend = qk.Aer.get_backend(options['backend'])
+        # For noise model and coupling map
+        self.noise_model, self.coupling_map  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get['coupling_map'])
+
+
+
+        #### Setup callback
         self.prnt = callback.get('print')
         self.count_states = callback.get('count_states')
         self.legal = 0
