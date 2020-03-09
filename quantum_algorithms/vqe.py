@@ -1,16 +1,17 @@
 import numpy as np
+import random
+
 import qiskit as qk
 from qiskit.extensions.standard import *
-import random
+
 from ansatz import UnitaryCoupledCluster
 from attributes import QuantumComputer
-
 from tools import print_state,get_state_count
 
 class VQE:
     def __init__(self,
                  hamiltonian,
-                 ansatz = None,
+                 ansatz = 'UCCSD',
                  ansatz_depth = 1,
                  options = {},
                  callback = {}):
@@ -31,7 +32,6 @@ class VQE:
                 * noise_model  (bool) - Noise model of device.
                 * coupling_map (bool) - Coupling map of device.
 
-            callback:
                 * print        (bool) - Print for every function evaluation.
                 * count_states (bool) - Count legal and illegal states for
                                         all function evaluations.
@@ -63,16 +63,16 @@ class VQE:
             self.optmizer.set_loss_function(self.expval)
         # For Backend
         if options.get('backend') == None:
-            options['backend'] = 'qasm_simulator' 
+            self.options['backend'] = 'qasm_simulator' 
         self.backend = qk.Aer.get_backend(options['backend'])
         # For noise model and coupling map
-        self.noise_model, self.coupling_map  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get['coupling_map'])
+        self.noise_model, self.coupling_map  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get('coupling_map'))
+        # GPU accelerated
+        if options.get('gpu'):
+            from qiskit_qcgpu_provider import QCGPUProvider
+            Provider = QCGPUProvider()
+            self.backend = Provider.get_backend(options['backend'])
 
-
-
-        #### Setup callback
-        self.prnt = callback.get('print')
-        self.count_states = callback.get('count_states')
         self.legal = 0
         self.illegal = 0
         self.evals = 0
@@ -120,14 +120,14 @@ class VQE:
             return(factor)
         qc.measure(qb,cb)
         job = qk.execute(qc, 
-                        backend = qk.Aer.get_backend('qasm_simulator'), 
+                        backend = self.backend, 
                         shots=self.shots,
                         seed_transpiler=self.seed,
                         seed_simulator=self.seed)
         result = job.result().get_counts(qc)
         E = 0
         #print_state(result,self.ansatz.n,self.ansatz.l)
-        if self.count_states:
+        if self.options.get('count_states'):
             legal,illegal = get_state_count(result,self.ansatz.n,self.ansatz.l)
             self.legal += legal
             self.illegal += illegal
@@ -156,9 +156,9 @@ class VQE:
                 qubit_list.append(qubit)
             #print('Term {}: {}'.format(i,pauli_string))
             E += self.measure(qubit_list,factor,qc,qb,cb)
-        if self.prnt:
+        if self.options.get('print'):
             print('<E> = ', E)
-        if self.max_energy:
+        if self.options.get('max_energy'):
             E = -E
         self.energies.append(E)
         self.evals += 1
@@ -230,7 +230,11 @@ class VQE:
 
     def ancilla_measure(self,factor,qc,qa,ca):
         qc.measure(qa,ca)
-        job = qk.execute(qc, backend = qk.Aer.get_backend('qasm_simulator',shots=self.shots))
+        job = qk.execute(qc, 
+                        backend = self.backend, 
+                        shots=self.shots,
+                        seed_transpiler=self.seed,
+                        seed_simulator=self.seed)
         result = job.result().get_counts(qc)
         im = 0
         for key, value in result.items():

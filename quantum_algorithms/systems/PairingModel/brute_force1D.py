@@ -4,11 +4,10 @@ import matplotlib.pyplot as plt
 import sys
 sys.path.append('../..')
 sys.path.append('../../../../QuantumCircuitOptimizer')
-from vqe import *
-from ucc import UnitaryCoupledCluster
+from vqe import VQE
 #from spsa import SPSA
 
-from quantum_circuit import QuantumCircuit,SecondQuantizedHamiltonian
+from quantum_circuit import SecondQuantizedHamiltonian
 
 from tqdm import tqdm
 
@@ -31,15 +30,7 @@ for p in range(0,l-1,2):
 		h_pqrs[p,p+1,r,r+1] = -0.5*g
 
 # Prepare circuit list
-pairing = SecondQuantizedHamiltonian(n,l)
-pairing.set_integrals(h_pq,h_pqrs)
-pairing.get_circuit()
-circuit_list = pairing.to_circuit_list(ptype='vqe')
-
-ansatz = UnitaryCoupledCluster(n,l,'D',1)
-og_params = ansatz.new_parameters(pairing.h,
-                                  pairing.v)
-print(len(og_params))
+pairing = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs)
 
 grid_points = 500
 x = np.linspace(0,2*np.pi,grid_points)
@@ -48,19 +39,14 @@ Es = np.zeros(grid_points)
 legal = np.zeros(grid_points)
 illegal = np.zeros(grid_points)
 
-theta = og_params
-
 i = 0
 for theta in tqdm(params):
-    vqe = VQE(n_qubits = l,
-        ansatz = ansatz,
-        circuit_list = circuit_list,
-        shots = 1000,
-        ancilla=0,
-        max_energy=False,
-        count_states=True,
-        prnt=False)
-    Es[i] = vqe.expval(theta)
+    vqe = VQE(pairing,
+        ansatz = 'UCCD')
+    vqe.options['shots'] = 1000
+    vqe.options['count_states'] = True
+    vqe.options['backend'] = 'statevector_simulator'
+    Es[i] = vqe.expval()
     legal[i] = vqe.legal
     illegal[i] = vqe.illegal
     i += 1
