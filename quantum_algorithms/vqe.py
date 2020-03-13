@@ -13,11 +13,10 @@ class VQE:
                  hamiltonian,
                  ansatz = 'UCCSD',
                  ansatz_depth = 1,
-                 options = {},
-                 callback = {}):
+                 options = {}):
         """
         Input:
-            hamiltonian  (int)   - Hamiltonian with system information
+            hamiltonian  (class) - Hamiltonian with system information
                                    and circuit_list.
             ansatz       (class) - Ansatz.
             ansatz_depth (class) - Ansatz depth of Trotter expansion.
