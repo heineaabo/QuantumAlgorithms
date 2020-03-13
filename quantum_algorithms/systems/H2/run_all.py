@@ -5,7 +5,6 @@ import sys
 sys.path.append('../..')
 sys.path.append('../../../../QuantumCircuitOptimizer')
 from vqe import *
-from ucc import UnitaryCoupledCluster
 #from spsa import SPSA
 from qiskit.aqua.components.optimizers import COBYLA,SPSA,POWELL,NELDER_MEAD
 
@@ -64,30 +63,20 @@ for i,R in enumerate(bonds):
     # Get psi4 
     h_pq,h_pqrs,Enuc,energies = get_H2_info(R)
     # Save energies
-    cisd[i] = energies['cisd']
-    ccsd[i] = energies['ccsd']
-    fci[i] = energies['fci']
-    hf[i] = energies['hf']
+    #cisd[i] = energies['cisd']
+    #ccsd[i] = energies['ccsd']
+    #fci[i] = energies['fci']
+    #hf[i] = energies['hf']
 
     # Prepare circuit list
-    H2 = SecondQuantizedHamiltonian(n,l)
-    H2.set_integrals(h_pq,h_pqrs,Enuc,add_spin=True)
-    H2.get_circuit()
-    circuit_list = H2.to_circuit_list(ptype='vqe')
+    H2 = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,add_spin=True)
 
-    ansatz = UnitaryCoupledCluster(n,l,'D',1)
-    og_params = ansatz.new_parameters(H2.h,
-                                      H2.v)
+    options = {'shots':10000}
+
     for method in methods:
         print('    - now running {}'.format(method),end='')
-        theta = og_params
-        vqe = VQE(n_qubits = l,
-            ansatz = ansatz,
-            circuit_list = circuit_list,
-            shots = 1000,
-            ancilla=0,
-            max_energy=False,
-            prnt=False)
+        vqe = VQE(H2,options=options)
+        theta = vqe.theta
         optimizer=None
         if method == 'Powell':
             optimizer = POWELL(maxfev=max_evals)
@@ -102,9 +91,9 @@ for i,R in enumerate(bonds):
         print(', {} function evaluations'.format(vqe.evals))
         
 
-[np.save('data/{}.npy'.format(key),np.asarray(item)) for key,item in result.items()]
-np.save('data/cisd.npy',cisd)
-np.save('data/ccsd.npy',ccsd)
-np.save('data/fci.npy',fci)
-np.save('data/hf.npy',hf)
+[np.save('data/opt1000evals/{}10k.npy'.format(key),np.asarray(item)) for key,item in result.items()]
+#np.save('data/cisd.npy',cisd)
+#np.save('data/ccsd.npy',ccsd)
+#np.save('data/fci.npy',fci)
+#np.save('data/hf.npy',hf)
 
