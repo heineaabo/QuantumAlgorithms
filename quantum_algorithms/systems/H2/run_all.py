@@ -39,11 +39,16 @@ def get_H2_info(R,
 
     return one_body, two_body, Enuc, energies
 
+def get_avg(L, num):
+    L = np.asarray(L[len(L)-num:])
+    return np.mean(L),np.std(L)
+
+
 l = 4
 n = 2
 
-max_iter = 1000
-max_evals = 1000
+max_iter = 100
+max_evals = 100
 
 methods = ['Powell','Nelder-Mead','Cobyla','SPSA']
 bonds = np.linspace(0.5,1.5,11)
@@ -57,21 +62,29 @@ result = {'Powell':[],
           'Nelder-Mead':[],
           'Cobyla':[],
           'SPSA':[]}
+result_avg = {'Powell':[],
+              'Nelder-Mead':[],
+              'Cobyla':[],
+              'SPSA':[]}
+result_std = {'Powell':[],
+              'Nelder-Mead':[],
+              'Cobyla':[],
+              'SPSA':[]}
 
 for i,R in enumerate(bonds):
     print('For bond length {}'.format(R))
     # Get psi4 
     h_pq,h_pqrs,Enuc,energies = get_H2_info(R)
     # Save energies
-    #cisd[i] = energies['cisd']
-    #ccsd[i] = energies['ccsd']
-    #fci[i] = energies['fci']
-    #hf[i] = energies['hf']
+    cisd[i] = energies['cisd']
+    ccsd[i] = energies['ccsd']
+    fci[i] = energies['fci']
+    hf[i] = energies['hf']
 
     # Prepare circuit list
     H2 = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,add_spin=True)
 
-    options = {'shots':10000}
+    options = {'shots':500}
 
     for method in methods:
         print('    - now running {}'.format(method),end='')
@@ -88,12 +101,17 @@ for i,R in enumerate(bonds):
             optimizer = SPSA(max_trials=int(max_evals/2))
         theta,E,_ = optimizer.optimize(len(theta),vqe.expval,initial_point=theta) 
         result[method].append(E)
+        avg,std = get_avg(vqe.energies,10)
+        result_avg[method].append(avg)
+        result_std[method].append(std)
         print(', {} function evaluations'.format(vqe.evals))
         
 
-[np.save('data/opt1000evals/{}10k.npy'.format(key),np.asarray(item)) for key,item in result.items()]
-#np.save('data/cisd.npy',cisd)
-#np.save('data/ccsd.npy',ccsd)
-#np.save('data/fci.npy',fci)
-#np.save('data/hf.npy',hf)
+[np.save('data/opt100evals/{}500.npy'.format(key),np.asarray(item)) for key,item in result.items()]
+[np.save('data/opt100evals/{}500_avg10.npy'.format(key),np.asarray(item)) for key,item in result_avg.items()]
+[np.save('data/opt100evals/{}500_std10.npy'.format(key),np.asarray(item)) for key,item in result_std.items()]
+np.save('data/opt100evals/cisd.npy',cisd)
+np.save('data/opt100evals/ccsd.npy',ccsd)
+np.save('data/opt100evals/fci.npy',fci)
+np.save('data/opt100evals/hf.npy',hf)
 

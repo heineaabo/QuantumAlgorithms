@@ -153,7 +153,7 @@ class QPE:
         idx = np.argsort(x)
         x = x[idx]
         y = y[idx]
-        psi = psi[idx]
+        #psi = psi[idx]
         ## Check if same phase measured for different eigenstates
         x_ = []
         y_ = []
