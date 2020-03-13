@@ -31,41 +31,33 @@ for p in range(0,l-1,2):
 UCCD = UnitaryCoupledCluster(n,l,'D',1)
 theta = UCCD.new_parameters()
 
-Pairing = SecondQuantizedHamiltonian(n,l)
-Pairing.set_integrals(h_pq,h_pqrs)
-Pairing.get_circuit()
-circuit_list = Pairing.to_circuit_list(ptype='vqe')
+Pairing = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs)
 
-methods = ['Powell','Cobyla','L-BFGS-B','Nelder-Mead']
-#for method in methods:
-    #new_theta = theta
-    #print('VQE with optimization method:',method)
-    #model = VQE(n_qubits = l,
-    #    ansatz = UCCD,
-    #    circuit_list = circuit_list,
-    #    shots = 500,
-    #    ancilla=0,
-    #    prnt=False,
-    #    max_energy=False)
-    #model.optimize_classical(new_theta,method=method)
-    #np.save('data/'+method+'.npy', model.energies)
+options = {'shots':10000}
 
-model = VQE(n_qubits = l,
-    ansatz = UCCD,
-    circuit_list = circuit_list,
-    shots = 500,
-    ancilla=0,
-    prnt=False,
-    max_energy=False)
-options = {'feedback':1,'grad_avg':5}
+methods = ['Powell','Cobyla','Nelder-Mead']
+for method in methods:
+    new_theta = theta
+    print('VQE with optimization method:',method)
+    model = VQE(Pairing,
+            ansatz = 'UCCD',
+            options=options)
+    model.optimize_classical(method=method)
+    np.save('data/'+method+'10k.npy', model.energies)
+
+theta = Pairing.theta
+model = VQE(Pairing,
+        ansatz = 'UCCD',
+        options=options)
+opt_options = {'feedback':1,'grad_avg':5}
 optimization = SPSA(model.expval,
                     theta,
                     min_change=0.1,
                     noise_var = 0.01,
-                    options=options)
+                    options=opt_options)
 optimization.run()
 method = 'SPSA'
-np.save('data/'+method+'.npy', model.energies)
+np.save('data/'+method+'10k.npy', model.energies)
 
 
 
