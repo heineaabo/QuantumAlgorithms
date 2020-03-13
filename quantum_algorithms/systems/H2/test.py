@@ -49,8 +49,7 @@ circuit_list = qubit_hamiltonian
 
 #h_pq, h_pqrs = molecular2sec_quant(h_pq,h_pqrs)
 
-Model = SecondQuantizedHamiltonian(2,4)
-Model.set_integrals(h_pq,h_pqrs,repulsion,add_spin=True)
+Model = SecondQuantizedHamiltonian(2,4,h_pq,h_pqrs,nuclear_repulsion=Enuc,add_spin=True)
 Model.get_circuit()
 circuit_list2 = Model.to_circuit_list(ptype='openfermion')
 print('OepnFerm')
