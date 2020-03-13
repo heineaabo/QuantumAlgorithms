@@ -50,10 +50,10 @@ n = 2
 max_iter = 100
 max_evals = 100
 
-methods = ['Powell','Nelder-Mead','Cobyla','SPSA']
+#methods = ['Powell','Nelder-Mead','Cobyla','SPSA']
+methods = ['Cobyla','SPSA']
 bonds = np.linspace(0.5,1.5,11)
 
-cisd = np.zeros(11)
 ccsd = np.zeros(11)
 fci = np.zeros(11)
 hf = np.zeros(11)
@@ -76,13 +76,13 @@ for i,R in enumerate(bonds):
     # Get psi4 
     h_pq,h_pqrs,Enuc,energies = get_H2_info(R)
     # Save energies
-    cisd[i] = energies['cisd']
     ccsd[i] = energies['ccsd']
     fci[i] = energies['fci']
     hf[i] = energies['hf']
 
     # Prepare circuit list
-    H2 = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,add_spin=True)
+    H2 = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,
+                                    nuclear_repulsion=Enuc,add_spin=True)
 
     options = {'shots':500}
 
