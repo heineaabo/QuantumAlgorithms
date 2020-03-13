@@ -155,8 +155,8 @@ class VQE:
                 qubit_list.append(qubit)
             #print('Term {}: {}'.format(i,pauli_string))
             E += self.measure(qubit_list,factor,qc,qb,cb)
-        if self.options.get('print'):
-            print('<E> = ', E)
+        #if self.options.get('print'):
+        print('<E> = ', E)
         if self.options.get('max_energy'):
             E = -E
         self.energies.append(E)
@@ -164,13 +164,13 @@ class VQE:
         return(E)
 
     def optimize_classical(self,
-                           theta,
                            method='L-BFGS-B', # Minimization method.
                            max_iters = 200,   # Minimizer iterations.
                            max_eval = 200,    # Funtion evaluations.
                            tol=1e-08,
                            adaptive=False):   # Nelder mead to be adaptive
         from scipy.optimize import minimize
+        theta = self.theta
         self.energies = []
         max_eval_str = 'maxfev' # Different string notation for different methods
         bounds = None
@@ -178,9 +178,10 @@ class VQE:
             bounds = [(0,2*np.pi) for i in theta]
             max_eval_str = 'maxfun'
         # Set scipy.minimize options
-        options={'disp':True,
-                 'maxiter':max_iters,
-                 max_eval_str:max_eval}
+        options= None
+        #options={'disp':True,
+        #         'maxiter':max_iters,
+        #         max_eval_str:max_eval}
         if method == 'Nelder-Mead':
             options['adaptive'] = adaptive
         result = minimize(self.expval,

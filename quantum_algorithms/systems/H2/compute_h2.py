@@ -43,8 +43,9 @@ for i,R in enumerate(bonds):
     print('For bond length {}'.format(R))
     # Get psi4 
     h_pq,h_pqrs,Enuc,energies = get_H2_info(R)
-    np.save('matrix_elements/h_R{}'.format(R),h_pq)
-    np.save('matrix_elements/v_R{}'.format(R),h_pqrs)
+    np.save('molecule/matrix_elements/h_R{}'.format(R),h_pq)
+    np.save('molecule/matrix_elements/v_R{}'.format(R),h_pqrs)
+    np.save('molecule/nuclear_repulsion/{}.npy'.format(R),Enuc)
     # Save energies
     ccsd[i] = energies['ccsd']
     fci[i] = energies['fci']
