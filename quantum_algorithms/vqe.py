@@ -141,7 +141,7 @@ class VQE:
         return(factor*E)
 
     def expval(self,theta=None):
-        if theta == None:
+        if theta is None:
             theta = self.theta
         E = 0
         qc,qb,cb = None,None,None
