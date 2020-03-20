@@ -56,6 +56,7 @@ class VQE:
             from qiskit.aqua import aqua_globals
             aqua_globals.random_seed = self.seed
         self.max_energy = options.get('max_energy')
+        self.prnt = options.get('print')
         # For optimization
         if options.get('optimizer') != None:
             self.optimizer = options.get('optimizer')
@@ -97,12 +98,10 @@ class VQE:
                 qc.h(qb[qubit])
             elif gate == 'y':
                 qc.y(qb[qubit])
-                qc.sdg(qb[qubit])
-                qc.h(qb[qubit])
-                #qc.rx(np.pi/2,qb[qubit])
+                qc.rx(np.pi/2,qb[qubit])
             elif gate == 'z':
-                #qc.z(qb[qubit])
-                qc.append(ZGate(),[qubit],[])
+                qc.z(qb[qubit])
+                #qc.append(ZGate(),[qubit],[])
         else:
             if gate == 'x':
                 qc.cx(qa[0],qb[qubit])
@@ -114,7 +113,7 @@ class VQE:
                 qc.cz(qa[0],qb[qubit])
         return(qc)
 
-    def measure(self,qubit_list,factor,qc,qb,cb):
+    def measure(self,qubit_list,factor,qc,qb,cb,num_y=0):
         if len(qubit_list) == 0:
             return(factor)
         qc.measure(qb,cb)
@@ -133,8 +132,10 @@ class VQE:
         for key, value in result.items():
             key1 = key[::-1]
             eigenval = 1
+            if num_y%2 == 1:
+                eigenval = -1
             for idx in qubit_list:
-                e =  1 if key1[idx] == '0' else -1
+                e =  1 if key1[idx] == '1' else -1
                 eigenval *= e
             E += eigenval*value
         E /= self.shots
@@ -150,13 +151,15 @@ class VQE:
             qubit_list = []
             qb,qc,cb =self.initialize_circuit()
             qc = self.ansatz(theta,qc,qb)
+            num_y = 0
             for qubit,gate in pauli_string[1:]:
                 qc = self.add_gate(qubit,gate,qc,qb)
                 qubit_list.append(qubit)
-            #print('Term {}: {}'.format(i,pauli_string))
-            E += self.measure(qubit_list,factor,qc,qb,cb)
-        #if self.options.get('print'):
-        print('<E> = ', E)
+                if gate == 'y':
+                    num_y += 1
+            E += self.measure(qubit_list,factor,qc,qb,cb,num_y)
+        if self.prnt:
+            print('<E> = ', E)
         if self.options.get('max_energy'):
             E = -E
         self.energies.append(E)
