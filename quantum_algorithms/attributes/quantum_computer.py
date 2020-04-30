@@ -1,12 +1,14 @@
 import pickle
 
+direct = '/Users/heine2307/Documents/Universitet/UiO/Master/GitHub/VQE/quantum_algorithms/attributes/'
+
 def QuantumComputer(device,noise_model,coupling_map):
         name = device
         if device == None:
             return None,None
         else:
             if noise_model:
-                noise_model = pickle.load(open('noise_models/'+device+'.pkl','r'))
+                noise_model = pickle.load(open(direct+'noise_models/'+device+'.pkl','rb'))
             if coupling_map:
-                coupling_map = pickle.load(open('coupling_maps/'+device+'.pkl','r'))
+                coupling_map = pickle.load(open(direct+'coupling_maps/'+device+'.pkl','rb'))
             return noise_model,coupling_map
