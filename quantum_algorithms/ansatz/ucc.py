@@ -31,6 +31,8 @@ class UnitaryCoupledCluster:
     def __call__(self,theta,qc,qb,qa=None,i=None):
         if 'S' not in self.trunc and 'D' not in self.trunc:
             raise ValueError('Need to spesify correct UCC type')
+        if not isinstance(theta,(list,tuple,np.ndarray)):
+            theta = [theta]
         qc = self.prepare_Hartree_state(qc,qb)
         theta = self.sort_theta(theta)
         for rho in range(self.depth):
