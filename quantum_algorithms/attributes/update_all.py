@@ -25,5 +25,10 @@ for i,device in enumerate(provider.backends()):
     f = open('noise_models/'+name+'.pkl','wb')
     pickle.dump(noise_model.to_dict(),f)
     f.close()
+    # Get Basis gates
+    basis_gates = noise_model.basis_gates
+    f = open('basis_gates/'+name+'.pkl','wb')
+    pickle.dump(noise_model.to_dict(),f)
+    f.close()
     print('{} / {}'.format(i+1,devices),name,'\u0020'*(str_len-len(name)),'Updated!')
 
