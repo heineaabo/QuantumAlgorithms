@@ -34,14 +34,14 @@ def pairing_ansatz(qc,qb,n_simulation):
 n_work = 6
 Emax = 2
 
-dt = 0.005
-n = 0.5
+t = 0.49*np.pi
+n = 10
 #dt = 2*np.pi/(Emax-(-3))
 
 print('Setting up Hamiltonian')
-pairing_model = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,exp=True,conv=1)
+pairing_model = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,exp=True)
 print('Setting up QPE class')
-qpe = QPE(pairing_model,pairing_ansatz,n_work,Emax,dt=dt,t=n)
+qpe = QPE(pairing_model,pairing_ansatz,n_work,Emax,t=t,n=n)
 print('Running...')
 qpe.estimate()
 
