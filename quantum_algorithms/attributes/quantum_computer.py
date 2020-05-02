@@ -2,7 +2,7 @@ import pickle
 
 direct = '/Users/heine2307/Documents/Universitet/UiO/Master/GitHub/VQE/quantum_algorithms/attributes/'
 
-def QuantumComputer(device,noise_model,coupling_map,basis_gates):
+def QuantumComputer(device,noise_model,coupling_map,basis_gates=False):
         name = device
         if device == None:
             return None,None,None
