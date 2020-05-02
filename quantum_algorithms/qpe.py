@@ -15,7 +15,7 @@ class QPE:
                  n_work,
                  Emax,
                  t = 0.5,
-                 n = 100,
+                 rho = 100,
                  options={}):
         """
         Input:
