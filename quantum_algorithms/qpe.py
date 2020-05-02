@@ -57,9 +57,10 @@ class QPE:
             self.options['backend'] = 'qasm_simulator' 
         self.backend = qk.Aer.get_backend(options['backend'])
         # For noise model and coupling map
-        self.noise_model, self.coupling_map  = QuantumComputer(options.get('device'),
+        self.noise_model, self.coupling_map,self.basis_gates  = QuantumComputer(options.get('device'),
                                                                options.get('noise_model'),
-                                                               options.get('coupling_map'))
+                                                               options.get('coupling_map'),
+                                                               options.get('basis_gates'))
         # GPU accelerated
         if options.get('gpu'):
             from qiskit_qcgpu_provider import QCGPUProvider
