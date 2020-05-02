@@ -15,7 +15,7 @@ class QPE:
                  n_work,
                  Emax,
                  t = 0.5,
-                 dt = 0.005,
+                 n = 100,
                  options={}):
         """
         Input:
@@ -40,7 +40,8 @@ class QPE:
 
         self.Emax = Emax
         self.t = t
-        self.dt = dt
+        self.n = n
+        self.dt = t/n
 
         #### Setup options
         self.options = options
@@ -81,7 +82,7 @@ class QPE:
     def evolve_state(self):
         for w in range(self.n_work):
             theta = (2**w)*self.dt
-            for n in range(int(self.t/self.dt)):
+            for n in range(self.n):
                 for gate_info in self.circuit_list:
                     gate = gate_info[0]
                     assert not np.iscomplex(gate_info[1])
@@ -109,11 +110,11 @@ class QPE:
                     else:
                         self.qc.append(gate.get_qiskit(),qbit,[])
                 # Insert Emax term
-                self.qc.cu1((2**w)*self.dt*self.Emax,
+                self.qc.cu1(theta*self.Emax,
                             self.qb_work[w],
                             self.qb_simulation[0])
                 self.qc.x(self.qb_simulation[0])
-                self.qc.cu1((2**w)*self.dt*self.Emax,
+                self.qc.cu1(theta*self.Emax,
                             self.qb_work[w],
                             self.qb_simulation[0])
                 self.qc.x(self.qb_simulation[0])
