@@ -2,9 +2,10 @@ import numpy as np
 import qiskit as qk
 
 from attributes import QuantumComputer
+from algoritm import QuantumAlgorithm
 
 
-class QPE:
+class QPE(QuantumAlgorithm):
     """
     Quantum Phase Estimation algorithm. 
     TODO: Compatible with the QuantumCircuit class from QuantumCircuitOptimizer.
@@ -23,6 +24,7 @@ class QPE:
                                    and circuit_list.
             options      (dict)  - 
         """
+        super().__init__(options)
         self.hamiltonian = hamiltonian
         self.n_simulation = hamiltonian.l
         self.n_work = n_work
@@ -68,7 +70,7 @@ class QPE:
             self.backend = Provider.get_backend(options['backend'])
         
     def estimate(self):
-        self.setup_superposition()
+        self.prepare_work_register()
         self.qc = self.ansatz(self.qc,self.qb_simulation,self.n_simulation)
         self.evolve_state()
         #print('Circuit depth:',self.qc.depth())
@@ -76,7 +78,7 @@ class QPE:
         self.inverse_fourier_transform()
         self.measure()
 
-    def setup_superposition(self):
+    def prepare_work_register(self):
         for qbit in range(self.n_work):
             self.qc.h(self.qb_work[qbit])
 
