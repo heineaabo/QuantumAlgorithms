@@ -12,7 +12,7 @@ from algorithm import QuantumAlgorithm
 class VQE(QuantumAlgorithm):
     def __init__(self,
                  hamiltonian,
-                 #optimizer,
+                 optimizer,
                  ansatz = 'UCCSD',
                  ansatz_depth = 1,
                  options = {}):
@@ -34,11 +34,12 @@ class VQE(QuantumAlgorithm):
         else:
             self.n_qubits = hamiltonian.l
             self.n_fermi = hamiltonian.n
-            self.circuit_list = hamiltonian.to_circuit_list(ptype='vqe')
+            self.circuit_list = hamiltonian.circuit_list
             self.conv = hamiltonian.conv # Occupation convention
 
         # Unitary Coupled Cluster ansatz
         if isinstance(ansatz,str):
+            print(ansatz)
             if ansatz[:3].upper() == 'UCC':
                 self.ansatz = UnitaryCoupledCluster(self.n_fermi,
                                                     self.n_qubits,
@@ -52,12 +53,11 @@ class VQE(QuantumAlgorithm):
         # Custom ansatz
         else:
             self.ansatz = ansatz
-            self.theta = ansatz.theta
+            self.theta = 0
 
         # For optimization
-        if options.get('optimizer') != None:
-            self.optimizer = options.get('optimizer')
-            self.optmizer.set_loss_function(self.expval)
+        self.optimizer = optimizer
+        self.optimizer.set_loss_function(self.expval)
 
         # For counting states
         self.legal = 0
@@ -72,153 +72,36 @@ class VQE(QuantumAlgorithm):
         qb = qk.QuantumRegister(n_qubits)
         cb = qk.ClassicalRegister(n_qubits)
         qc = qk.QuantumCircuit(qb,cb)
-        return qb,qc,cb
-
-    def add_gate(self,qubit,gate,qc,qb,qa=None):
-        """
-        Add gate with measurement transformation.
-        If qa register -> controlled operations.
-        """
-        if qa == None:
-            if gate == 'x':
-                qc.h(qb[qubit])
-                #qc.x(qb[qubit])
-            elif gate == 'y':
-                #qc.rx(-np.pi/2,qb[qubit])
-                qc.sdg(qb[qubit])
-                qc.h(qb[qubit])
-                #qc.y(qb[qubit])
-            #elif gate == 'z':
-            #    qc.z(qb[qubit])
-        else:
-            if gate == 'x':
-                #qc.cx(qa[0],qb[qubit])
-                qc.ch(qa[0],qb[qubit])
-            elif gate == 'y':
-                #qc.cy(qa[0],qb[qubit])
-                qc.crx(-np.pi/2,qa[0],qb[qubit])
-            #elif gate == 'z':
-            #    qc.cz(qa[0],qb[qubit])
-        return(qc)
-
-    def prepare_pauli_string(self,pauli_string,qc,qb,ancilla=True):
-        """
-        Add gate with measurement transformation.
-        If qa register -> controlled operations.
-        """
-        qubit_list = []
-        for qubit,gate in pauli_string[1:]:
-            if gate == 'x':
-                qc.h(qb[qubit])
-            elif gate == 'y':
-                qc.sdg(qb[qubit])
-                qc.h(qb[qubit])
-            qubit_list.append(qubit)
-        target = qubit_list[0]
-        if ancilla:
-            for qbit in qubit_list[1:]:
-                qc.cx(qb[qbit],qb[target])
-            return qc,target
-        else:
-            return qc,qubit_list
-
-    def energy_contribution(self,measurement,target,factor):
-        E = 0
-        if self.options.get('count_states'):
-            legal,illegal = get_state_count(measurement,self.ansatz.n,self.ansatz.l)
-            self.legal += legal
-            self.illegal += illegal
-        for state,num_measure in measurement.items():
-            state = state[::-1]
-            if isinstance(target,int):
-                eigenval = 1 if state[target] == '0' else -1
-            elif isinstance(target,(list,tuple)):
-                eigenval = 1
-                for i in target:
-                    eigenval *= 1 if state[i] == '0' else -1
-            E += eigenval*num_measure
-        E /= self.shots
-        return factor*E
+        return qc,qb,cb
 
     def expval(self,theta=None):
         if theta is None:
             theta = self.theta
         E = 0
-        qb,qc,cb = self.initialize_circuit()
+        # Prepare qiskit circuit and registers.
+        qc,qb,cb = self.initialize_circuit()
+        # Prepare ansatz to be reused.
         qc_ansatz = self.ansatz(theta,qc,qb)
-        Z_list = []
         for i,pauli_string in enumerate(self.circuit_list):
-            factor = pauli_string[0].real
-            if len(pauli_string) == 1:
-                E += factor
-                continue
-            only_Z = True
-            for action in pauli_string[1:]:
-                if action[1] in ['x','y']:
-                    only_Z = False
-            if only_Z:
-                Z_list.append(pauli_string)
-                continue
+            # New circuit
             qc = qk.QuantumCircuit(qb,cb)
-            qc,target = self.prepare_pauli_string(pauli_string,qc,qb,ancilla=self.ancilla_measure)
+            # Apply measurement transformation
+            qc = pauli_string.prepare(qc,qb) 
+            # Combine circuit with ansatz circuit
             qc = qc_ansatz + qc
+            # Measure circuit
             measurement = self.measure(qc,qb,cb)
-            E += self.energy_contribution(measurement,target,factor)
-        E += self.Z_expval(Z_list,qc_ansatz,qb,cb)
+            # Extract eigenvalue
+            E += pauli_string.expectation(measurement,self.shots)
         if self.prnt:
-            print('<E> = ', E,', theta =',theta)
+            print('⟨E⟩ = {}, θ = {}'.format(E,theta))
         self.energies.append(E)
         self.evals += 1
         return E
 
-    def Z_expval(self,Z_list,qc,qb,cb):
-        if len(Z_list) == 0:
-            return 0
-        result = self.measure(qc,qb,cb)
-        all_E = 0
-        for i,pauli_string in enumerate(Z_list):
-            factor = pauli_string[0]
-            Zs = [action[0] for action in pauli_string[1:]]
-            E = 0
-            for key,val in result.items():
-                state = key[::-1]
-                e = 1
-                for qbit in Zs:
-                    e *= 1 if state[qbit] == '0' else -1
-                E += e*val
-            E /= self.shots
-            all_E += factor*E
-        return all_E
+    def optimize(self,theta):
+        return self.optimizer(theta)
 
-    def optimize_classical(self,
-                           method='L-BFGS-B', # Minimization method.
-                           max_iters = 200,   # Minimizer iterations.
-                           max_eval = 200,    # Funtion evaluations.
-                           tol=1e-08,
-                           adaptive=False):   # Nelder mead to be adaptive
-        from scipy.optimize import minimize
-        theta = self.theta
-        self.energies = []
-        max_eval_str = 'maxfev' # Different string notation for different methods
-        bounds = None
-        if method == 'L-BFGS-B':
-            bounds = [(0,2*np.pi) for i in theta]
-            max_eval_str = 'maxfun'
-        # Set scipy.minimize options
-        options= None
-        #options={'disp':True,
-        #         'maxiter':max_iters,
-        #         max_eval_str:max_eval}
-        if method == 'Nelder-Mead':
-            options['adaptive'] = adaptive
-        result = minimize(self.expval,
-                            theta,
-                            bounds=bounds,
-                            method=method,
-                            options=options,
-                            tol=tol)
-        params = result.x
-        return params
 
     def optimize_gradient(self,
                           theta,
