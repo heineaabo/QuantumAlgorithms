@@ -35,7 +35,16 @@ class QuantumAlgorithm:
             self.options['backend'] = 'qasm_simulator' 
         self.backend = qk.Aer.get_backend(options['backend'])
         # For noise model, coupling map and basis gates
-        self.noise_model, self.coupling_map, self.basis_gates  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get('coupling_map'),options.get('basis_gates'))
+        if options.get('device') == None:
+            self.noise_model, self.coupling_map, self.basis_gates = None,None,None
+        else:
+            device = QuantumComputer(options.get('device'))
+            if options.get('noise_model') != None:
+                self.noise_model = device.noise_model
+                self.coupling_map = device.coupling_map
+                self.basis_gates = device.basis_gates
+        #self.noise_model, self.coupling_map, self.basis_gates  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get('coupling_map'),options.get('basis_gates'))
+
         # GPU accelerated
         if options.get('gpu'):
             from qiskit_qcgpu_provider import QCGPUProvider

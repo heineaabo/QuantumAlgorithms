@@ -1,13 +1,10 @@
 import numpy as np
-import random
-
 import qiskit as qk
 from qiskit.extensions.standard import *
-
-from ansatz import UnitaryCoupledCluster
-from attributes import QuantumComputer
 from tools import print_state,get_state_count
+from ansatz import UnitaryCoupledCluster
 from algorithm import QuantumAlgorithm
+from attributes import QuantumComputer
 
 class VQE(QuantumAlgorithm):
     def __init__(self,
@@ -39,7 +36,6 @@ class VQE(QuantumAlgorithm):
 
         # Unitary Coupled Cluster ansatz
         if isinstance(ansatz,str):
-            print(ansatz)
             if ansatz[:3].upper() == 'UCC':
                 self.ansatz = UnitaryCoupledCluster(self.n_fermi,
                                                     self.n_qubits,
@@ -67,31 +63,29 @@ class VQE(QuantumAlgorithm):
         # For plotting progression from optimization
         self.energies = []
 
-    def initialize_circuit(self):
-        n_qubits = self.n_qubits
-        qb = qk.QuantumRegister(n_qubits)
-        cb = qk.ClassicalRegister(n_qubits)
-        qc = qk.QuantumCircuit(qb,cb)
-        return qc,qb,cb
-
     def expval(self,theta=None):
         if theta is None:
             theta = self.theta
         E = 0
         # Prepare qiskit circuit and registers.
-        qc,qb,cb = self.initialize_circuit()
+        qb = qk.QuantumRegister(self.n_qubits)
+        cb = qk.ClassicalRegister(self.n_qubits)
+        qc = qk.QuantumCircuit(qb,cb)
         # Prepare ansatz to be reused.
         qc_ansatz = self.ansatz(theta,qc,qb)
         for i,pauli_string in enumerate(self.circuit_list):
+            # Skip constant term
+            if len(pauli_string) == 0:
+                E += pauli_string.factor
+                continue
             # New circuit
             qc = qk.QuantumCircuit(qb,cb)
             # Apply measurement transformation
             qc = pauli_string.prepare(qc,qb) 
             # Combine circuit with ansatz circuit
             qc = qc_ansatz + qc
-            # Measure circuit
+            # Measure circuit and add expectation value
             measurement = self.measure(qc,qb,cb)
-            # Extract eigenvalue
             E += pauli_string.expectation(measurement,self.shots)
         if self.prnt:
             print('⟨E⟩ = {}, θ = {}'.format(E,theta))
@@ -99,9 +93,10 @@ class VQE(QuantumAlgorithm):
         self.evals += 1
         return E
 
-    def optimize(self,theta):
+    def optimize(self,theta=None):
+        if theta == None:
+            theta = self.theta
         return self.optimizer(theta)
-
 
     def optimize_gradient(self,
                           theta,
@@ -120,7 +115,9 @@ class VQE(QuantumAlgorithm):
                 for pauli_string in self.circuit_list:
                     factor = pauli_string[0].real
                     qubit_list = []
-                    qb,qc,cb =self.initialize_circuit()
+                    qb = qk.QuantumRegister(self.n_qubits)
+                    cb = qk.ClassicalRegister(self.n_qubits)
+                    qc = qk.QuantumCircuit(qb,cb)
                     # Prepare ancilla qubit with Hadamard
                     qa = qk.QuantumRegister(1)
                     ca = qk.ClassicalRegister(1)
