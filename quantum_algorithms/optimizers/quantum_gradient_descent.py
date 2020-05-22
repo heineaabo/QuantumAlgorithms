@@ -3,7 +3,7 @@ from tools import print_state
 
 class QuantumGradientDescent:
     """
-    Quantum Gradient Descent
+    Gradient Descent
 
 
 
