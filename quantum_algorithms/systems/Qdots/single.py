@@ -18,19 +18,18 @@ h_pqrs = np.load('matrix/v_n{}_l{}.npy'.format(n,l))
 E = np.load('matrix/E_n{}_l{}.npy'.format(n,l))
 
 from time import time
-t1 = time()
-qdot = FermionHamiltonian(n,l,h_pq,h_pqrs,anti_symmetric=True)
-t2 = time()
+#t1 = time()
+#qdot = FermionHamiltonian(n,l,h_pq,h_pqrs,anti_symmetric=True)
+#t2 = time()
 t3 = time()
 qdot2 = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,anti_symmetric=True)
 t4 = time()
 
-for i in qdot.circuit_list: print(i)
-print('NEXT')
-lst = sorted(qdot2.circuit_list,key=len)
-for i in lst: print(i)
+#for i in qdot.circuit_list: print(i)
+#print('NEXT')
+print('Time:',t4-t3)
+for i in qdot2.circuit_list('vqe'): print(i)
 
-print(t2-t1,t4-t3)
 
 options = {'shots':10000,'print':True}
 #options = {'shots':1000,

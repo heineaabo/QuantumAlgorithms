@@ -4,13 +4,13 @@ import sys
 sys.path.append('../..')
 sys.path.append('../../optimizers')
 sys.path.append('../../../../QuantumCircuitOptimizer')
-from quantum_circuit import QuantumCircuit,SecondQuantizedHamiltonian,FermionHamiltonian
+from quantum_circuit import QuantumCircuit,SecondQuantizedHamiltonian,PairingHamiltonian
 from fci import FCI
 
 from vqe import VQE
 from optimizer import Minimizer
 
-l = 4     # number of spin orbitals / number of qubits
+l = 6     # number of spin orbitals / number of qubits
 n = 2     # Number of occupied spin orbitals
 delta = 1 # Level spacing
 g = 1     # Interaction strength
@@ -34,11 +34,12 @@ print('FCI energy :',Efci)
 
 import time
 t1 = time.time()
-pairing =  SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,anti_symmetric=True)
+pairing =  PairingHamiltonian(n,l,h_pq,h_pqrs)
 t2 = time.time()
 print('Time:',t2-t1)
 
-for i in pairing.circuit_list('vqe'): print(i)
+print(pairing.circuit_list('vqe'))
+#for i in pairing.circuit_list('vqe'): print(i)
 
 #options = {'count_states':False,'shots':100000,'print':False,'seed':5,'ancilla':False}
 #options = {'shots':10000,'print':True}
