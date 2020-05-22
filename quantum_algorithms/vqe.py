@@ -31,7 +31,7 @@ class VQE(QuantumAlgorithm):
         else:
             self.n_qubits = hamiltonian.l
             self.n_fermi = hamiltonian.n
-            self.circuit_list = hamiltonian.circuit_list
+            self.circuit_list = hamiltonian.circuit_list('vqe')
             self.conv = hamiltonian.conv # Occupation convention
 
         # Unitary Coupled Cluster ansatz

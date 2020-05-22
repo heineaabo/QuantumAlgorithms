@@ -22,6 +22,7 @@ for p in range(0,l-1,2):
 		h_pqrs[p,p+1,r,r+1] = -0.5*g
 
 
+options = {'seed':1}
 pairing_model = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs)
-vqe = VQE(pairing_model,ansatz='UCCD')
+vqe = VQE(pairing_model,ansatz='UCCD',options=options)
 print('Energy expectation value with MP2 parameters:',vqe.expval())
