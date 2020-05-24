@@ -16,7 +16,7 @@ class QPE(QuantumAlgorithm):
                  n_work,
                  Emax,
                  t = 0.5,
-                 rho = 100,
+                 n = 100,
                  options={}):
         """
         Input:
@@ -24,13 +24,13 @@ class QPE(QuantumAlgorithm):
                                    and circuit_list.
             options      (dict)  - 
         """
+        super().__init__(options)
         self.hamiltonian = hamiltonian
         self.n_simulation = hamiltonian.l
         self.n_work = n_work
         self.n_qubits = self.n_work+self.n_simulation
-        self.circuit_list = hamiltonian.circuit_list('qpe')
+        self.circuit_list = hamiltonian.to_circuit_list(ptype='qpe')
         self.ansatz = ansatz
-        super().__init__(self.n_qubits,options)
 
         self.qb_work = qk.QuantumRegister(self.n_work,'qW')
         self.cb_work = qk.ClassicalRegister(self.n_work,'cW')
@@ -45,6 +45,29 @@ class QPE(QuantumAlgorithm):
         self.n = n
         self.dt = t/n
 
+        #### Setup options
+        self.options = options
+        # For execution
+        self.shots = 1000 if options.get('shots') == None\
+                          else options.get('shots')
+        self.seed = options.get('seed')
+        if self.seed != None:
+            from qiskit.aqua import aqua_globals
+            aqua_globals.random_seed = self.seed
+        # For Backend
+        if options.get('backend') == None:
+            self.options['backend'] = 'qasm_simulator' 
+        self.backend = qk.Aer.get_backend(options['backend'])
+        # For noise model and coupling map
+        self.noise_model, self.coupling_map,self.basis_gates  = QuantumComputer(options.get('device'),
+                                                               options.get('noise_model'),
+                                                               options.get('coupling_map'),
+                                                               options.get('basis_gates'))
+        # GPU accelerated
+        if options.get('gpu'):
+            from qiskit_qcgpu_provider import QCGPUProvider
+            Provider = QCGPUProvider()
+            self.backend = Provider.get_backend(options['backend'])
         
     def estimate(self):
         self.prepare_work_register()
@@ -156,10 +179,7 @@ class QPE(QuantumAlgorithm):
         self.qc.measure(self.qb_work,self.cb_work)
         self.qc.measure(self.qb_simulation,self.cb_simulation)
         job = qk.execute(self.qc, backend = self.backend, shots=self.shots)
-        #result = job.result().get_counts(self.qc)
-        result = job.result()
-        if self.meas_fitter != None:
-            result = self.meas_fitter.filter.apply(result)
-        self.result = result.get_counts(self.qc)
+        result = job.result().get_counts(self.qc)
+        self.result = result
         self.sort_results()
 
