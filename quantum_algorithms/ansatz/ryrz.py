@@ -16,6 +16,8 @@ class RYRZ:
         """
         Pairing ansatz. For 2 particles and 4 orbitals.
         """
+        if theta == None:
+            theta = self.new_parameters()
         theta = self.sort_theta(theta)
         qc = self.prepare_Hartree_state(qc,qb)
         #for d in range(self.depth):
@@ -23,8 +25,8 @@ class RYRZ:
             qc.ry(theta[0],qb[0])
             qc.rz(theta[1],qb[0])
             # Entanglers
-            qc.cx(qb[0],qb[1])
             qc.x(qb[0])
+            qc.cx(qb[0],qb[1])
             qc.cx(qb[0],qb[2])
             qc.cx(qb[0],qb[3])
             qc.x(qb[0])
