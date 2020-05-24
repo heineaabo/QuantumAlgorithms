@@ -16,20 +16,20 @@ class RYRZ:
         """
         Pairing ansatz. For 2 particles and 4 orbitals.
         """
-        if theta == None:
-            theta = self.new_parameters()
+        #if theta == None:
+        #    theta = self.new_parameters()
         theta = self.sort_theta(theta)
         qc = self.prepare_Hartree_state(qc,qb)
         #for d in range(self.depth):
         for d in range(1):
-            qc.ry(theta[0],qb[0])
-            qc.rz(theta[1],qb[0])
+            qc.u3(theta[0],0,0,qb[0]) # Ry gate
+            qc.u1(theta[1],qb[0])     # Rz gate
             # Entanglers
-            qc.x(qb[0])
-            qc.cx(qb[0],qb[1])
-            qc.cx(qb[0],qb[2])
-            qc.cx(qb[0],qb[3])
-            qc.x(qb[0])
+            qc.u3(np.pi,0,np.pi,qb[0])# X gate
+            qc.cx(qb[0],qb[1])        # CNOT gate
+            qc.cx(qb[0],qb[2])        # CNOT gate
+            qc.cx(qb[0],qb[3])        # CNOT gate
+            qc.u3(np.pi,0,np.pi,qb[0])# X gate
         return qc
     #def __call__(self,theta,qc,qb,qa=None,i=None):
     #    theta = self.sort_theta(theta)
