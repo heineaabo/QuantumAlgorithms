@@ -24,13 +24,13 @@ class QPE(QuantumAlgorithm):
                                    and circuit_list.
             options      (dict)  - 
         """
-        super().__init__(options)
         self.hamiltonian = hamiltonian
         self.n_simulation = hamiltonian.l
         self.n_work = n_work
         self.n_qubits = self.n_work+self.n_simulation
         self.circuit_list = hamiltonian.circuit_list('qpe')
         self.ansatz = ansatz
+        super().__init__(self.n_qubits,options)
 
         self.qb_work = qk.QuantumRegister(self.n_work,'qW')
         self.cb_work = qk.ClassicalRegister(self.n_work,'cW')
@@ -156,7 +156,10 @@ class QPE(QuantumAlgorithm):
         self.qc.measure(self.qb_work,self.cb_work)
         self.qc.measure(self.qb_simulation,self.cb_simulation)
         job = qk.execute(self.qc, backend = self.backend, shots=self.shots)
-        result = job.result().get_counts(self.qc)
-        self.result = result
+        #result = job.result().get_counts(self.qc)
+        result = job.result()
+        if self.meas_fitter != None:
+            result = self.meas_fitter.filter.apply(result)
+        self.result = result.get_counts(self.qc)
         self.sort_results()
 

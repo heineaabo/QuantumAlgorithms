@@ -2,7 +2,7 @@ import numpy as np
 import qiskit as qk
 from qiskit.extensions.standard import *
 from tools import print_state,get_state_count
-from ansatz import UnitaryCoupledCluster
+from ansatz import UnitaryCoupledCluster,RYRZ
 from algorithm import QuantumAlgorithm
 from attributes import QuantumComputer
 
@@ -22,7 +22,6 @@ class VQE(QuantumAlgorithm):
             ansatz_depth (class) - Ansatz depth of Trotter expansion.
 
         """
-        super().__init__(options)
         if isinstance(hamiltonian,dict):
             self.n_qubits = hamiltonian['l']
             self.n_fermi = hamiltonian['n']
@@ -34,6 +33,7 @@ class VQE(QuantumAlgorithm):
             self.circuit_list = hamiltonian.circuit_list('vqe')
             self.conv = hamiltonian.conv # Occupation convention
 
+        super().__init__(self.n_qubits,options)
         # Unitary Coupled Cluster ansatz
         if isinstance(ansatz,str):
             if ansatz[:3].upper() == 'UCC':
@@ -46,6 +46,10 @@ class VQE(QuantumAlgorithm):
                 else:
                     self.theta = self.ansatz.new_parameters(hamiltonian.h,
                                                             hamiltonian.v)
+            elif ansatz.upper() == 'RYRZ':
+                self.ansatz = RYRZ(self.n_fermi,self.n_qubits,depth=ansatz_depth)
+                self.theta = self.ansatz.new_parameters()
+
         # Custom ansatz
         else:
             self.ansatz = ansatz
@@ -86,9 +90,12 @@ class VQE(QuantumAlgorithm):
             qc = qc_ansatz + qc
             # Measure circuit and add expectation value
             measurement = self.measure(qc,qb,cb)
+            if self.meas_fitter != None:
+                measurement = self.meas_fitter.filter.apply(measurement)
             E += pauli_string.expectation(measurement,self.shots)
         if self.prnt:
-            print('⟨E⟩ = {}, θ = {}'.format(E,theta))
+            #print('⟨E⟩ = {}, θ = {}'.format(E,theta))
+            print('⟨E⟩ = {}'.format(E))
         self.energies.append(E)
         self.evals += 1
         return E

@@ -3,7 +3,7 @@ import qiskit as qk
 
 
 class QuantumAlgorithm:
-    def __init__(self,options):
+    def __init__(self,l,options):
         """
         Quantum Algorithm superclass. Handles execution specifications.
 
@@ -35,15 +35,25 @@ class QuantumAlgorithm:
             self.options['backend'] = 'qasm_simulator' 
         self.backend = qk.Aer.get_backend(options['backend'])
         # For noise model, coupling map and basis gates
-        if options.get('device') == None:
-            self.noise_model, self.coupling_map, self.basis_gates = None,None,None
-        else:
+        self.noise_model, self.coupling_map, self.basis_gates = None,None,None
+        if options.get('device') != None:
             device = QuantumComputer(options.get('device'))
             if options.get('noise_model') != None:
                 self.noise_model = device.noise_model
+                # Create error mitigation fitter
+                from attributes import get_measurement_fitter
+                self.meas_fitter = get_measurement_fitter(l,
+                                                         self.backend,
+                                                         device,
+                                                         self.shots)
+            if options.get('coupling_map') != None:
                 self.coupling_map = device.coupling_map
+            if options.get('basis_gates') != None:
                 self.basis_gates = device.basis_gates
-        #self.noise_model, self.coupling_map, self.basis_gates  = QuantumComputer(options.get('device'),options.get('noise_model'),options.get('coupling_map'),options.get('basis_gates'))
+        # Qubit layout, virtual to physical
+        self.layout = options.get('layout')
+        # Optimization level
+        self.optimization_level=options.get('optimization_level')
 
         # GPU accelerated
         if options.get('gpu'):
@@ -65,6 +75,8 @@ class QuantumAlgorithm:
         job = qk.execute(qc, 
                         backend = self.backend, 
                         shots=self.shots,
+                        optimization_level=self.optimization_level,
+                        initial_layout=self.layout,
                         noise_model=self.noise_model,
                         coupling_map=self.coupling_map,
                         basis_gates=self.basis_gates,
