@@ -10,7 +10,7 @@ from fci import FCI
 from vqe import VQE
 from optimizer import Minimizer
 
-l = 6     # number of spin orbitals / number of qubits
+l = 4     # number of spin orbitals / number of qubits
 n = 2     # Number of occupied spin orbitals
 delta = 1 # Level spacing
 g = 1     # Interaction strength
@@ -38,21 +38,27 @@ pairing =  PairingHamiltonian(n,l,h_pq,h_pqrs)
 t2 = time.time()
 print('Time:',t2-t1)
 
-print(pairing.circuit_list('vqe'))
-#for i in pairing.circuit_list('vqe'): print(i)
 
-#options = {'count_states':False,'shots':100000,'print':False,'seed':5,'ancilla':False}
+circ = pairing.circuit_list('vqe')
+print(circ)
+circ.groupz()
+print(circ)
+
+
+
+#options = {'count_states':False,'shots':1000,'print':True}
 #options = {'shots':10000,'print':True}
-#options = {'shots':1000,
-#           'print':True,
-#           'device':'ibmq_16_melbourne',
-#           'noise_model':True} #,
-#           'coupling_map':True}
-#model = VQE(pairing,Minimizer('Powell'),'UCCD',options=options)
-#for i in model.circuit_list: print(i)
+options = {'shots':1000,
+           'optimization_level':1,
+           'device':'ibmq_london',
+           #'layout':[0,2,3,1],  #[1,0,2,3],
+           'noise_model':True,
+           #'basis_gates':True,
+           #'coupling_map':True,
+           'print':True}
+model = VQE(pairing,Minimizer('Powell'),'UCCD',ansatz_depth=1,options=options)
 
-#param = model.optimize()
-#print(param)
+param = model.optimize()
 
 #print(model.theta)
 #print(model.expval(theta))
