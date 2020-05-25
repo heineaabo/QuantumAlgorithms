@@ -36,6 +36,7 @@ class QuantumAlgorithm:
         self.backend = qk.Aer.get_backend(options['backend'])
         # For noise model, coupling map and basis gates
         self.noise_model, self.coupling_map, self.basis_gates = None,None,None
+        self.meas_fitter = None
         if options.get('device') != None:
             device = QuantumComputer(options.get('device'))
             if options.get('noise_model') != None:
