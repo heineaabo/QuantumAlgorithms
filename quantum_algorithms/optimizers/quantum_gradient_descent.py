@@ -9,51 +9,121 @@ class QuantumGradientDescent:
 
     TODO: Add gradient averaging
     """
-    def __init__(self,loss_function,theta,step_length=1e-1,max_iter=200,tol=1e-08,feedback=True):
-        self.L = loss_function
-        self.theta = theta
+    def __init__(self,
+                 method='',
+                 step_length=1e-1,
+                 max_iter=200,
+                 tol=1e-08,
+                 feedback=True):
+        self.method = method
         self.step_length = step_length
         self.max_iter = max_iter
         self.tol = tol
         self.feedback = feedback
+        self.energies = []
 
-    def __call__simple(self):
-        new_theta = self.theta
-        num_params = len(new_theta)
-        last_eval = 0
-        for i in range(self.max_iter):
-            main_eval = self.L(new_theta)
-            # Check convergence
-            if i > 0:
-                if np.abs(main_eval,last_eval) < tol:
-                    break
-            param_evals = np.zeros(num_params)
-            for k in range(num_params):
-                copy = new_theta
-                copy[k] += np.pi/2
-                param_evals[k] = self.L(copy)
-            grads = main_eval - param_evals
-            new_theta -= grads*step_length
-            last_eval = main_eval
+    def __gradient_simple(self,theta):
+        main_eval = self.L(new_theta) 
+        param_evals = np.zeros(num_params)
+        for k in range(num_params):
+            copy = theta
+            copy[k] += np.pi/2
+            param_evals[k] = self.L(copy)
+        grad = main_eval - param_evals
+        return grad
+
+    def __call__(self,theta):
+        if self.method.lower() == 'adam':
+            new_theta = self._adam(theta)
+        elif self.method.lower() == 'adagrad':
+            new_theta = self._adagrad(theta)
+        elif self.method.lower() == 'rmsprop':
+            new_theta = self._RMSprop(theta)
+        else:
+            new_theta = self._vanilla(theta)
         return new_theta
 
-    def __call__(self):
-        new_theta = self.theta
+    def _gradient(self,theta):
+        grad = np.zeros_like(theta)
+        for k in range(len(theta)):
+            e_k = np.zeros_like(theta)
+            e_k[k] = 0.5*np.pi
+            left = self.L(theta+e_k)
+            right = self.L(theta-e_k)
+            grad[k] = 0.5*(right - left)
+        return grad
+
+    def _adam(self,theta):
+        alpha = 1 #self.step_length
+        eps = 1e-08
+        beta_1 = 0.9
+        beta_2 = 0.999
+        M = np.zeros_like(theta)
+        R = np.zeros_like(theta)
+        m_hat = 1
+        r_hat = 1
+
+        new_theta = theta
         num_params = len(new_theta)
         for i in range(self.max_iter):
-            grads = np.zeros(num_params)
-            for k in range(num_params):
-                e_k = np.zeros(num_params)
-                e_k[k] = 1
-                e_k *= 0.5*np.pi
-                left = self.L(new_theta+e_k)
-                right = self.L(new_theta-e_k)
-                print(left,right)
-                grads[k] = 0.5*(left - right)
-                #grads[k] = 0.5*(self.L(new_theta+e_k) - self.L(new_theta-e_k))
-            new_theta -= grads*self.step_length
+            t = i+1
+            grad = self._gradient(new_theta)
+            M = beta_1*M + (1 - beta_1)*grad
+            R = beta_2*R + (1 - beta_2)*np.power(grad,2)
+            m_hat = M / (1 - np.power(beta_1,t))
+            r_hat = R / (1 - np.power(beta_2,t))
+            new_theta += alpha*m_hat/(np.sqrt(r_hat) + eps)
             if self.feedback:
                 E = self.L(new_theta)
-                print('Iteration {}\n⟨E⟩ = {}\n{}'.format(i+1,E,new_theta))
+                self.energies.append(E)
+                print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,new_theta))
+        return new_theta
+
+    def _vanilla(self,theta):
+        alpha = self.step_length
+        new_theta = theta
+        num_params = len(new_theta)
+        for i in range(self.max_iter):
+            grad = self._gradient(new_theta)
+            new_theta += grad*alpha
+            if self.feedback:
+                E = self.L(new_theta)
+                self.energies.append(E)
+                print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,new_theta))
+        return new_theta
+    
+    def _adagrad(self,theta):
+        alpha = self.step_length
+        eps = 1e-08
+        new_theta = theta
+        num_params = len(new_theta)
+        cache = np.zeros_like(theta)
+        for i in range(self.max_iter):
+            grad = self._gradient(new_theta)
+            cache += np.power(grad,2)
+            new_theta += alpha*grad / (np.sqrt(cache)+eps)
+            if self.feedback:
+                E = self.L(new_theta)
+                self.energies.append(E)
+                print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,new_theta))
+        return new_theta
+
+    def _RMSprop(self,theta):
+        alpha = self.step_length
+        eps = 1e-08
+        gamma = .9
+        new_theta = theta
+        num_params = len(theta)
+        cache = np.zeros_like(theta)
+        for i in range(self.max_iter):
+            grad = self._gradient(theta)
+            cache = gamma*cache + (1. - gamma)*np.power(grad,2)
+            theta += alpha*grad / (np.sqrt(cache)+eps)
+            if self.feedback:
+                E = self.L(theta)
+                self.energies.append(E)
+                print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,theta))
         return new_theta
             
+    def set_loss_function(self,loss_function):
+        self.L = loss_function
