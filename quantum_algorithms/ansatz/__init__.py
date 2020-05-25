@@ -1,2 +1,2 @@
 from .ucc import UnitaryCoupledCluster
-from .ryrz import RYRZ
+from .ryrz import RYRZ,RY
