@@ -2,9 +2,10 @@ import numpy as np
 import qiskit as qk
 from qiskit.extensions.standard import *
 from tools import print_state,get_state_count
-from ansatz import UnitaryCoupledCluster,RYRZ
+from ansatz import UnitaryCoupledCluster,RYRZ,RY
 from algorithm import QuantumAlgorithm
 from attributes import QuantumComputer
+from optimizers import RyGradient
 
 class VQE(QuantumAlgorithm):
     def __init__(self,
@@ -46,6 +47,9 @@ class VQE(QuantumAlgorithm):
                 else:
                     self.theta = self.ansatz.new_parameters(hamiltonian.h,
                                                             hamiltonian.v)
+            elif ansatz.upper() == 'RY':
+                self.ansatz = RY(self.n_fermi,self.n_qubits,depth=ansatz_depth)
+                self.theta = self.ansatz.new_parameters()
             elif ansatz.upper() == 'RYRZ':
                 self.ansatz = RYRZ(self.n_fermi,self.n_qubits,depth=ansatz_depth)
                 self.theta = self.ansatz.new_parameters()
@@ -57,7 +61,10 @@ class VQE(QuantumAlgorithm):
 
         # For optimization
         self.optimizer = optimizer
-        self.optimizer.set_loss_function(self.expval)
+        if isinstance(optimizer,RyGradient):
+            self.optimizer.set_vqe(self)
+        else:
+            self.optimizer.set_loss_function(self.expval)
 
         # For counting states
         self.legal = 0
