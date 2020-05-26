@@ -11,9 +11,10 @@ class QuantumGradientDescent:
     """
     def __init__(self,
                  method='',
-                 step_length=1e-1,
-                 max_iter=200,
-                 tol=1e-08,
+                 step_length=1e-1, 
+                 max_iter=200, # Number of iterations (2 func_evals per iter)
+                 tol=1e-08, # Convergence tolerance
+                 avg_num=0, # Number of gradients averaged, 0 if not.
                  feedback=True):
         self.method = method
         self.step_length = step_length
@@ -21,13 +22,16 @@ class QuantumGradientDescent:
         self.tol = tol
         self.feedback = feedback
         self.energies = []
+        self.thetas = []
+        self.grads = []
+        self.avg_num = avg_num
 
     def __gradient_simple(self,theta):
         main_eval = self.L(new_theta) 
         param_evals = np.zeros(num_params)
         for k in range(num_params):
             copy = theta
-            copy[k] += np.pi/2
+            copy[k] += np.pi*0.5
             param_evals[k] = self.L(copy)
         grad = main_eval - param_evals
         return grad
@@ -51,6 +55,10 @@ class QuantumGradientDescent:
             left = self.L(theta+e_k)
             right = self.L(theta-e_k)
             grad[k] = 0.5*(right - left)
+        # Gradient averaging
+        self.grads.append(grad)
+        if len(self.grads) > self.avg_num and self.avg_num != 0:
+            grad = np.mean(self.grads[-self.avg_num:],axis=0)
         return grad
 
     def _adam(self,theta):
@@ -111,19 +119,34 @@ class QuantumGradientDescent:
     def _RMSprop(self,theta):
         alpha = self.step_length
         eps = 1e-08
-        gamma = .9
+        gamma = 0.9
         new_theta = theta
         num_params = len(theta)
         cache = np.zeros_like(theta)
+        last_theta = theta
+        last_update = 100
+        self.thetas.append(theta[0])
         for i in range(self.max_iter):
             grad = self._gradient(theta)
             cache = gamma*cache + (1. - gamma)*np.power(grad,2)
-            theta += alpha*grad / (np.sqrt(cache)+eps)
+            update = alpha*grad / (np.sqrt(cache)+eps)
+            theta += update
+            self.thetas.append(theta[0])
             if self.feedback:
                 E = self.L(theta)
                 self.energies.append(E)
                 print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,theta))
+            if np.abs(update) < self.tol:
+                print('Converged!')
+                break
+            if last_update + update < np.abs(last_update) and\
+                last_update + update < np.abs(update):
+                    print('Updated!',alpha)
+                    alpha *= 0.9
+            last_update = update
         return new_theta
             
     def set_loss_function(self,loss_function):
         self.L = loss_function
+
+
