@@ -45,6 +45,3 @@ class Minimizer:
     def set_loss_function(self,loss_function):
         self.L = loss_function
 
-    #def set_theta(self,theta):
-    #    self.theta = theta
-

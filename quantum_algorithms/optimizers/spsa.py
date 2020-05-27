@@ -8,14 +8,14 @@ class SPSA:
     - https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8005699&tag=1
     """
     def __init__(self,
-                 loss_function,
-                 theta_init,
                  max_iter=200,
                  min_change=0.1,
                  noise_var = 0.01,  # c
                  alpha=0.602,
                  gamma=0.101,
-                 options={}):
+                 feedback=1,
+                 grad_avg=0,
+                 grad_bounds=[0,0]):
         """
         Simultaneous Perturbation Stochastic Approximation.
 
@@ -38,15 +38,15 @@ class SPSA:
                 Coefficient for determination of 'c'.
             - options:
                 Dictionary for other options.
-                    -> 'feedback' (int) : Number of iterations before printing
-                                          loss evaluation.
-                    -> 'grad_avg' (int) : To implement gradient average.
-                                          Number of previous gradients 
-                                          to be considerd.
-                    -> 'grad_bnds'(list): [lower,upper]
+            - feedback (int):
+                Number of iterations before printing loss evaluation.
+            - grad_avg (int): 
+                To implement gradient average. Number of previous gradients to be considerd.
+            - grad_bounds (list): 
+                Bounds for gradient [lower,upper]
         """
-        self.L = loss_function
-        self.theta = theta_init
+        #self.L = loss_function
+        #self.theta = theta_init
         self.gamma = gamma
         self.alpha = alpha
         self.p = len(self.theta)
@@ -56,22 +56,13 @@ class SPSA:
         self.a = self._step_length()
         self.max_iter = max_iter
 
-        ### Options
-        self.options = options
         # Check feedback
-        self.feedback = 1
-        if 'feedback' in self.options:
-            self.feedback = self.options['feedback']
+        self.feedback = feedback
         # Check if gradient averaging
-        self.n_g = 0
-        if 'grad_avg' in self.options:
-            self.n_g = self.options['grad_avg']
+        self.n_g = grad_avg
         # Check if gradient bounds
-        self.lb = 0
-        self.ub = 0
-        if 'grad_bnds' in self.options:
-            self.lb = self.options['grad_bnds'][0]
-            self.ub = self.options['grad_bnds'][1]
+        self.lb = grad_bounds[0]
+        self.ub = grad_bounds[1]
 
     def set_loss_function(self,loss_function):
         self.L = loss_function
@@ -109,7 +100,7 @@ class SPSA:
                 last_grad.append(g)
             else:
                 last_grad.append(g)
-
+            
             # Update parameters
             theta = theta - a_k*g
             # Print loss evaluation.
@@ -133,5 +124,4 @@ class SPSA:
         a0 = self.min_change*(np.power(self.A+1,self.alpha)\
                 /np.sum(np.abs(g0)))
         return a0
-
 
