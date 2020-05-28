@@ -42,11 +42,12 @@ class QuantumAlgorithm:
             if options.get('noise_model') != None:
                 self.noise_model = device.noise_model
                 # Create error mitigation fitter
-                from attributes import get_measurement_fitter
-                self.meas_fitter = get_measurement_fitter(l,
-                                                         self.backend,
-                                                         device,
-                                                         self.shots)
+                if options.get('meas_fitter') == None:
+                    from attributes import get_measurement_fitter
+                    self.meas_fitter = get_measurement_fitter(l,
+                                                             self.backend,
+                                                             device,
+                                                             self.shots)
             if options.get('coupling_map') != None:
                 self.coupling_map = device.coupling_map
             if options.get('basis_gates') != None:
