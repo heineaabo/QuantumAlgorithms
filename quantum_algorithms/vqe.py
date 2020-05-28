@@ -48,7 +48,7 @@ class VQE(QuantumAlgorithm):
                     self.theta = self.ansatz.new_parameters(hamiltonian.h,
                                                             hamiltonian.v)
             elif ansatz.upper() == 'RY':
-                self.ansatz = RY(self.n_fermi,self.n_qubits,depth=ansatz_depth)
+                self.ansatz = RY(self.n_fermi,self.n_qubits)
                 self.theta = self.ansatz.new_parameters()
             elif ansatz.upper() == 'RYRZ':
                 self.ansatz = RYRZ(self.n_fermi,self.n_qubits,depth=ansatz_depth)
