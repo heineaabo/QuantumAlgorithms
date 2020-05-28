@@ -14,8 +14,7 @@ class SPSA:
                  alpha=0.602,
                  gamma=0.101,
                  feedback=1,
-                 grad_avg=0,
-                 grad_bounds=[0,0]):
+                 grad_avg=0):
         """
         Simultaneous Perturbation Stochastic Approximation.
 
@@ -42,33 +41,23 @@ class SPSA:
                 Number of iterations before printing loss evaluation.
             - grad_avg (int): 
                 To implement gradient average. Number of previous gradients to be considerd.
-            - grad_bounds (list): 
-                Bounds for gradient [lower,upper]
         """
-        #self.L = loss_function
-        #self.theta = theta_init
         self.gamma = gamma
         self.alpha = alpha
-        self.p = len(self.theta)
         self.A = int(max_iter * 0.1)
         self.c = noise_var
         self.min_change = min_change
-        self.a = self._step_length()
         self.max_iter = max_iter
 
-        # Check feedback
         self.feedback = feedback
-        # Check if gradient averaging
         self.n_g = grad_avg
-        # Check if gradient bounds
-        self.lb = grad_bounds[0]
-        self.ub = grad_bounds[1]
 
     def set_loss_function(self,loss_function):
         self.L = loss_function
 
-    def __call__(self):
-        theta = self.theta
+    def __call__(self,theta):
+        self.p = len(theta)
+        self.a = self._step_length(theta)
         last_grad = [] 
         for k in range(self.max_iter):
             # Set gain variables
@@ -78,19 +67,6 @@ class SPSA:
             # Evaluate gradient
             g = self._gradient(theta,c_k)
 
-            # gradient bounds
-            if (self.lb,self.ub) != (0,0):
-                for i,g_i in enumerate(g):
-                    if g_i < 0:
-                        sign = -1
-                    else:
-                        sign = 1
-                    mag = np.abs(g_i)
-                    if mag > self.ub:
-                        g_i = sign*self.ub
-                    elif mag < self.lb:
-                        g_i = sign*self.lb
-                    g[i] = g_i 
             # gradient averaging
             if k > self.n_g:
                 for i in range(self.n_g):
@@ -105,8 +81,8 @@ class SPSA:
             theta = theta - a_k*g
             # Print loss evaluation.
             if k%self.feedback == 0:
-                print('\u2329E\u232A =',self.L(theta))
-                print(theta)
+                print('Iteration {}: \u2329E\u232A = {}'.format(k,self.L(theta)))
+                print(theta,g)
 
     def _gradient(self,theta,c_k):
         # Sample from Bernoulli distribution
@@ -119,8 +95,8 @@ class SPSA:
 
         return gradient
 
-    def _step_length(self):
-        g0 = self._gradient(self.theta,self.c)
+    def _step_length(self,theta):
+        g0 = self._gradient(theta,self.c)
         a0 = self.min_change*(np.power(self.A+1,self.alpha)\
                 /np.sum(np.abs(g0)))
         return a0

@@ -136,13 +136,13 @@ class QuantumGradientDescent:
                 E = self.L(theta)
                 self.energies.append(E)
                 print('Iteration {}: ⟨E⟩ = {}, t = {}'.format(i+1,E,theta))
-            if np.abs(update) < self.tol:
+            if all(np.abs(update)) < self.tol:
                 print('Converged!')
                 break
-            if last_update + update < np.abs(last_update) and\
-                last_update + update < np.abs(update):
-                    print('Updated!',alpha)
-                    alpha *= 0.9
+            #if last_update + update < np.abs(last_update) and\
+            #    last_update + update < np.abs(update):
+            #        print('Updated!',alpha)
+            #        alpha *= 0.9
             last_update = update
         return new_theta
             
