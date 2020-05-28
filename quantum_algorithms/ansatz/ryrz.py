@@ -1,7 +1,7 @@
 import numpy as np
 import qiskit as qk
 
-class RY:
+class RYpairing:
     """
     """
 
