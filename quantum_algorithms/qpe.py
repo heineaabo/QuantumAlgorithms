@@ -2,7 +2,7 @@ import numpy as np
 import qiskit as qk
 
 from attributes import QuantumComputer
-from algoritm import QuantumAlgorithm
+from algorithm import QuantumAlgorithm
 
 
 class QPE(QuantumAlgorithm):
@@ -30,7 +30,7 @@ class QPE(QuantumAlgorithm):
         self.n_qubits = self.n_work+self.n_simulation
         self.circuit_list = hamiltonian.circuit_list('qpe')
         self.ansatz = ansatz
-        super().__init__(self.n_qubits,options)
+        super().__init__(self.n_work,options)
 
         self.qb_work = qk.QuantumRegister(self.n_work,'qW')
         self.cb_work = qk.ClassicalRegister(self.n_work,'cW')
@@ -42,8 +42,8 @@ class QPE(QuantumAlgorithm):
 
         self.Emax = Emax
         self.t = t
-        self.n = n
-        self.dt = t/n
+        self.n = rho
+        self.dt = t/self.n
 
         
     def estimate(self):
@@ -115,6 +115,17 @@ class QPE(QuantumAlgorithm):
             phase += (2**(-i-1))*bit
         return phase
 
+    def measure(self):
+        self.qc.measure(self.qb_work,self.cb_work)
+        self.qc.measure(self.qb_simulation,self.cb_simulation)
+        job = qk.execute(self.qc, backend = self.backend, shots=self.shots)
+        #result = job.result().get_counts(self.qc)
+        result = job.result()
+        if self.meas_fitter != None:
+            result = self.meas_fitter.filter.apply(result)
+        self.result = result.get_counts(self.qc)
+        self.sort_results()
+
     def sort_results(self):
         x = [] # phase
         y = [] # hits
@@ -152,14 +163,57 @@ class QPE(QuantumAlgorithm):
         self.y = y_
         return self
 
-    def measure(self):
-        self.qc.measure(self.qb_work,self.cb_work)
-        self.qc.measure(self.qb_simulation,self.cb_simulation)
-        job = qk.execute(self.qc, backend = self.backend, shots=self.shots)
-        #result = job.result().get_counts(self.qc)
-        result = job.result()
-        if self.meas_fitter != None:
-            result = self.meas_fitter.filter.apply(result)
-        self.result = result.get_counts(self.qc)
-        self.sort_results()
+    def statEig(self,min_measure=15):
+        """
+        Finds the estimated eigenvalue and variance by averaging the peaks found with run_simulation
+        input:
+                measurements (array) - output from run_simulation
+                min_measure (int) - Minimum measurements of state before it is considered
+                for eigenvalue estimation.
+        output:
+                eigenvalues (list) - Estimated eigenvalues
+                varEigs (list) - Estimated variance of eigenvalue approximation
+        """
+        sum_xi_yi = 0
+        sum_yi = 0
+        xi_list = []
+        eigenvalues = []
+        variances = []
+        minMeasBool = False
+        x = np.array(self.x).astype(np.float)
+        y = np.array(self.y).astype(np.int)
+        idx = np.argsort(x)
+        x = x[idx]
+        y = y[idx]
+        energy_dict = {}
 
+        for xi,yi in zip(x,y):
+            energy_dict[xi] = 0
+        for xi,yi in zip(x,y):
+            energy_dict[xi] += yi
+
+        x = np.array(list(energy_dict.keys()))
+        y = np.array(list(energy_dict.values()))
+        idx = np.argsort(x)
+        x = x[idx]
+        y = y[idx]
+
+        for xi, yi in zip(x,y):
+            if yi >= min_measure:
+                minMeasBool = True
+                sum_xi_yi += xi*yi
+                sum_yi += yi
+                xi_list.append(xi)
+            if minMeasBool and yi < min_measure:
+                minMeasBool = False
+                mu = sum_xi_yi/sum_yi
+                eigenvalues.append(mu)
+                var = 0
+                sum_yi = 0
+                sum_xi_yi = 0
+                for val in xi_list:
+                    var += (val - mu)**2
+                var/= len(xi_list)
+                variances.append(var)
+                xi_list = []
+        return eigenvalues,variances
