@@ -56,10 +56,10 @@ for j in range(1,3):
     for theta in tqdm(thetas):
         vqe = VQE(pairing,
                   SPSA(),
-                  'RY',
+                  'RYPAIRING',
                   options=options[j])
         data[j,i] = vqe.expval(theta)
         i += 1
-#np.save('normal.npy',data[0])
-np.save('ESSEX_noisy_no_meas_fit.npy',data[1])
-np.save('ESSEX_noisy_with_meas_fit.npy',data[2])
+#np.save('RY/ESSEX_GC_normal.npy',data[0])
+np.save('RY/ESSEX_GC_noisy_n.npy',data[1])
+np.save('RY/ESSEX_GC_noisy_w.npy',data[2])

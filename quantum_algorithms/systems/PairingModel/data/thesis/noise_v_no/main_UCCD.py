@@ -61,6 +61,6 @@ for j in range(3):
                   options=options[j])
         data[j,i] = vqe.expval(theta)
         i += 1
-np.save('UCCD/normal.npy',data[0])
-np.save('UCCD/noisy_no_meas_fit.npy',data[1])
-np.save('UCCD/noisy_with_meas_fit.npy',data[2])
+np.save('UCCD/LONDON_GC_normal.npy',data[0])
+np.save('UCCD/LONDON_GC_noisy_n.npy',data[1])
+np.save('UCCD/LONDON_GC_noisy_w.npy',data[2])

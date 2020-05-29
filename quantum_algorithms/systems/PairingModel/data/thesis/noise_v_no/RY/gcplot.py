@@ -1,12 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-#normal = np.load('normal.npy')
-#noise_no = np.load('noisy_no_meas_fit.npy')
-#noise_w = np.load('noisy_with_meas_fit.npy')
-normal = np.load('LONDON_GC_normal.npy')
-noise_no = np.load('LONDON_GC_noisy_n.npy')
-noise_w = np.load('LONDON_GC_noisy_w.npy')
+normal = np.load('ESSEX_GC_normal.npy')
+noise_no = np.load('ESSEX_GC_noisy_n.npy')
+noise_w = np.load('ESSEX_GC_noisy_w.npy')
 
 x = np.arange(1,2*np.pi+1,2*np.pi/500)
 plt.figure(0)
