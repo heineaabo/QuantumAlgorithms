@@ -2,7 +2,7 @@ import numpy as np
 import qiskit as qk
 from qiskit.extensions.standard import *
 from tools import print_state,get_state_count
-from ansatz import UnitaryCoupledCluster,RYRZ,RY
+from ansatz import UnitaryCoupledCluster,RYRZ,RY,RYpairing
 from algorithm import QuantumAlgorithm
 from attributes import QuantumComputer
 from optimizers import RyGradient
@@ -47,6 +47,9 @@ class VQE(QuantumAlgorithm):
                 else:
                     self.theta = self.ansatz.new_parameters(hamiltonian.h,
                                                             hamiltonian.v)
+            elif ansatz.upper() == 'RYPAIRING':
+                self.ansatz = RYpairing(self.n_fermi,self.n_qubits)
+                self.theta = self.ansatz.new_parameters()
             elif ansatz.upper() == 'RY':
                 self.ansatz = RY(self.n_fermi,self.n_qubits)
                 self.theta = self.ansatz.new_parameters()
@@ -74,7 +77,7 @@ class VQE(QuantumAlgorithm):
         # For plotting progression from optimization
         self.energies = []
 
-    def expval(self,theta=None):
+    def expval(self,theta=None,callback=True):
         if theta is None:
             theta = self.theta
         E = 0
@@ -100,11 +103,12 @@ class VQE(QuantumAlgorithm):
             if self.meas_fitter != None:
                 measurement = self.meas_fitter.filter.apply(measurement)
             E += pauli_string.expectation(measurement,self.shots)
-        if self.prnt:
-            #print('⟨E⟩ = {}, θ = {}'.format(E,theta))
-            print('⟨E⟩ = {}'.format(E))
-        self.energies.append(E)
-        self.evals += 1
+        if callback:
+            if self.prnt:
+                #print('⟨E⟩ = {}, θ = {}'.format(E,theta))
+                print('⟨E⟩ = {}'.format(E))
+            self.energies.append(E)
+            self.evals += 1
         return E
 
     def optimize(self,theta=None):
