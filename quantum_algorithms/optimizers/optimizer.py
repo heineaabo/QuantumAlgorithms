@@ -45,6 +45,18 @@ class Minimizer:
     def set_loss_function(self,loss_function):
         self.L = loss_function
 
+    def set_option(self,option,value):
+        if option == 'tol':
+            self.tol = value
+        else:
+            if option == 'xtol' and self.method.lower() == 'nelder-mead':
+                option = 'xatol'
+            if option == 'ftol' and self.method.lower() == 'nelder-mead':
+                option = 'fatol'
+            if option == 'ftol' and self.method.lower() == 'cobyla':
+                option = 'tol'
+            self.options[option] = value
+
 class QKSPSA:
     def __init__(self,
                    max_iter=200, # Minimizer iterations.
