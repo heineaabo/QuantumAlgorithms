@@ -60,9 +60,11 @@ class QPE(QuantumAlgorithm):
             self.qc.h(self.qb_work[qbit])
 
     def evolve_state(self):
-        for w in range(self.n_work):
-            theta = (2**w)*self.dt
-            for n in range(self.n):
+        #for w in range(self.n_work):
+        for n in range(self.n):
+            #for n in range(self.n):
+            for w in range(self.n_work):
+                theta = (2**w)*self.dt
                 for gate_info in self.circuit_list:
                     gate = gate_info[0]
                     assert not np.iscomplex(gate_info[1])
