@@ -1,5 +1,5 @@
 import numpy as np
-def pairing_mat_elems(n,l,delta,g):
+def get_pairing_matrix(n,l,delta,g):
     """
     Pairing model matrix elements
     l     : Number of spin orbitals / number of qubits

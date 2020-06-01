@@ -32,7 +32,7 @@ pairing = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,exp=True)
 Emax = 2
 shots = 1000
 t = 0.49*np.pi
-rho = 1
+rho = 25
 
 options = {'shots':shots}
 
@@ -43,8 +43,8 @@ for n_work in [4,5,6,7,8,9,10]:
     estimator = QPE(pairing,pairing_ansatz,n_work,Emax,t=t,rho=rho,options=options)
     estimator.estimate()
 
-    np.save('data/work/plot_n{}_l{}_w{}_{}shots.npy'.format(n,l,n_work,shots),np.stack((estimator.x,estimator.y)))
+    np.save('data/work/plot_n{}_l{}_w{}_rho{}_{}shotsX.npy'.format(n,l,n_work,rho,shots),np.stack((estimator.x,estimator.y)))
     eigvals,variance = estimator.statEig()
-    np.save('data/work/eig_var_n{}_l{}_w{}_{}shots.npy'.format(n,l,n_work,shots),np.stack((eigvals,variance)))
+    np.save('data/work/eig_var_n{}_l{}_w{}_rho{}_{}shotsX.npy'.format(n,l,n_work,rho,shots),np.stack((eigvals,variance)))
 
 

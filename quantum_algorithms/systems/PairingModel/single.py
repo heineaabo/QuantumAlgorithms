@@ -30,7 +30,6 @@ for p in range(0,l-1,2):
 Efci = FCI(n,l,h_pq,h_pqrs)
 print('FCI energy :',Efci)
 
-#theta = [5.829889373194686] # Hardcode good parameter
 
 import time
 t1 = time.time()
@@ -38,27 +37,28 @@ pairing =  PairingHamiltonian(n,l,h_pq,h_pqrs)
 t2 = time.time()
 print('Time:',t2-t1)
 
+pairing.group_paulis(qwc=False,gc=True)
 
-circ = pairing.circuit_list('vqe')
-print(circ)
-circ.groupz()
-print(circ)
 
+
+theta = [5.829889373194686] # Hardcode good parameter
 
 
 #options = {'count_states':False,'shots':1000,'print':True}
 #options = {'shots':10000,'print':True}
 options = {'shots':1000,
-           'optimization_level':1,
-           'device':'ibmq_london',
-           #'layout':[0,2,3,1],  #[1,0,2,3],
-           'noise_model':True,
+           'seed':1,
+           #'optimization_level':1,
+           #'device':'ibmq_london',
+           #'meas_fit':True,
+           #'layout':[0,3,2,1],  
+           #'noise_model':True,
            #'basis_gates':True,
            #'coupling_map':True,
            'print':True}
-model = VQE(pairing,Minimizer('Powell'),'UCCD',ansatz_depth=1,options=options)
+model = VQE(pairing,Minimizer('Powell'),'RYPAIRING',options=options)
 
-param = model.optimize()
+#param = model.optimize()
 
 #print(model.theta)
-#print(model.expval(theta))
+print(model.expval(theta))

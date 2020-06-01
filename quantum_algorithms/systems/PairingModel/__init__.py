@@ -1,1 +1,1 @@
-from matrix import pairing_mat_elems
+from matrix import get_pairing_matrix
