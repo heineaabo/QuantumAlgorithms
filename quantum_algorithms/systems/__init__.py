@@ -1,3 +1,3 @@
-from .PairingModel import Pairing_mat_elems
-from .Qdots import qdots_mat_elems
-from .H2 import h2_mat_elems
+from .PairingModel import get_pairing_matrix
+from .Qdots import get_qdots_matrix
+from .H2 import get_h2_matrix
