@@ -42,7 +42,7 @@ class QuantumAlgorithm:
             if options.get('noise_model') != None:
                 self.noise_model = device.noise_model
                 # Create error mitigation fitter
-                if options.get('meas_fitter') == None:
+                if options.get('meas_fit') in [None,True]:
                     from attributes import get_measurement_fitter
                     self.meas_fitter = get_measurement_fitter(l,
                                                              self.backend,
@@ -78,10 +78,10 @@ class QuantumAlgorithm:
                         backend = self.backend, 
                         shots=self.shots,
                         optimization_level=self.optimization_level,
-                        initial_layout=self.layout,
                         noise_model=self.noise_model,
                         coupling_map=self.coupling_map,
                         basis_gates=self.basis_gates,
+                        initial_layout=self.layout,
                         seed_transpiler=self.seed,
                         seed_simulator=self.seed)
         return job.result().get_counts(qc)

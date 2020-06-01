@@ -101,7 +101,7 @@ class QPE(QuantumAlgorithm):
                             self.qb_simulation[0])
                 self.qc.x(self.qb_simulation[0])
 
-    def inverse_fourier_transform(self,swap=True):
+    def inverse_fourier_transform(self,swap=False):
         if swap:
             for i in range(int(self.n_work/2)):
                 self.qc.swap(self.qb_work[i],self.qb_work[self.n_work-i-1])
@@ -135,7 +135,7 @@ class QPE(QuantumAlgorithm):
         for key,val in self.result.items():
             key = key[::-1]
             phi,eigenstate = key.split(' ')
-            phi = phi[::-1]
+            #phi = phi[::-1]
             assert len(phi) == self.n_work
             assert len(eigenstate) == self.n_simulation
             psi.append(eigenstate)

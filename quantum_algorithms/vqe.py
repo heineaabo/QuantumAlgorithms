@@ -56,6 +56,10 @@ class VQE(QuantumAlgorithm):
             elif ansatz.upper() == 'RYRZ':
                 self.ansatz = RYRZ(self.n_fermi,self.n_qubits,depth=ansatz_depth)
                 self.theta = self.ansatz.new_parameters()
+            else:
+                def no_ansatz(t,qc,qb):
+                    return qc
+                self.ansatz = no_ansatz
 
         # Custom ansatz
         else:
@@ -115,6 +119,47 @@ class VQE(QuantumAlgorithm):
         if theta == None:
             theta = self.theta
         return self.optimizer(theta)
+
+    def get_mean(self,theta,N=None,M=10):
+        """
+        N: Number of shots.
+        M: Number of expectation value calculations.
+        """
+        old_shots = self.shots
+        if N == None:
+            N = self.shots
+        self.shots = N
+        measurements = np.zeros(M)
+        for i in range(M):
+            measurements[i] = self.expval(theta)
+        self.shots = old_shots
+        return np.mean(measurements),np.var(measurements)
+
+    def get_state_coeff(self,theta):
+        # Get FCI state configuration
+        from itertools import combinations
+        states = []
+        states_int = []
+        for state in combinations(range(self.n_qubits),self.n_fermi):
+            states_int.append([orb for orb in state])
+        states_str = [['0' for j in range(self.n_qubits)] for i in states_int]
+        
+        for state,inds in zip(states_str,states_int):
+            for ind in inds:
+                state[ind] = '1'
+            states.append(''.join(state)[::-1])
+        qb = qk.QuantumRegister(self.n_qubits)
+        cb = qk.ClassicalRegister(self.n_qubits)
+        qc = qk.QuantumCircuit(qb,cb)
+        qc = self.ansatz(theta,qc,qb)
+        measurement = self.measure(qc,qb,cb)
+        coef = np.zeros(len(states))
+        for i,state in enumerate(states):
+            if measurement.get(state) == None:
+                coef[i] = 0
+            else:
+                coef[i] = measurement[state]
+        return coef/self.shots
 
     def optimize_gradient(self,
                           theta,
