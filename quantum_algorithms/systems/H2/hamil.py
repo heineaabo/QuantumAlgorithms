@@ -18,7 +18,7 @@ from openfermion.transforms import get_fermion_operator, get_sparse_operator, jo
 from openfermion.utils import get_ground_state
 from openfermionpsi4 import run_psi4
 
-R = 0.8
+R = 0.7
 
 geometry = [['H',[0,0,0]],
             ['H',[0,0,R]]]
