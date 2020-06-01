@@ -2,7 +2,7 @@ import scipy.special as special
 import numpy as np
 import itertools as it
 
-def FCI(n,l,h,v):
+def FCI(n,l,h,v,ret_all=False):
     """
     n - Number of particles
     l - Number of spin orbitals
@@ -38,7 +38,10 @@ def FCI(n,l,h,v):
                     r,s = to_annihilate
                     H[row,col] += v[p,q,r,s]
     Es,Vs = np.linalg.eigh(H)
-    return Es[0]
+    if ret_all:
+        return Es,Vs
+    else:
+        return Es[0]
 
 def configurations(n,l):
     states = []
