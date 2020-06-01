@@ -8,12 +8,14 @@ class Minimizer:
     def __init__(self, method,
                        max_iter=200, # Minimizer iterations.
                        max_eval=200,  # Funtion evaluations.
-                       tol=1e-08):
+                       tol=1e-08,
+                       disp=True):
         #super().__init__()
         self.max_iter = max_iter
         self.max_eval = max_eval
         self.tol = tol
         self.method = method
+        self.disp = disp
 
         # Set scipy.minimize options
         self.bounds = None
@@ -21,9 +23,11 @@ class Minimizer:
         if self.method == 'L-BFGS-B':
             self.bounds = [(0,2*np.pi) for i in theta]
             max_eval_str = 'maxfun'
-        self.options = {'disp':True,
+        self.options = {'disp':self.disp,
                         'maxiter': self.max_iter,
                         max_eval_str: self.max_eval}
+        if method == 'Cobyla':
+            del self.options[max_eval_str]
         #if method == 'Nelder-Mead':
        #     if len(theta) > 5:
        #         self.options['adaptive'] = True
