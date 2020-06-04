@@ -41,7 +41,12 @@ class UnitaryCoupledCluster:
             if 'S' in self.trunc:
                 qc = self.UCCS(qc,qb,theta[0],rho,qa=qa,d_j=i)
             if 'D' in self.trunc:
-                qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
+                if 'r' in self.trunc:
+                    # Reduced circuit for hydrogenic system
+                    qc = self.UCCD_hydrogenic(qc,qb,theta[1],rho,qa=qa,d_j=i)
+                else:
+                    qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
+                #qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
         return qc
 
     def new_parameters(self,h=[],v=[]):
@@ -300,6 +305,66 @@ class UnitaryCoupledCluster:
                         
                         t += 1
 
+        return qc
+
+    def UCCD_hydrogenic(self,qc,qb,theta,rho,qa=None,d_j=-1):
+        """
+        Optimized UCC doubles implementation.
+        qa -> Ancilla qubit register
+        d_j -> parameter index of parameter to diffrentiate
+        """
+        n_qubits = self.l
+        n_fermi = self.n
+
+        t = 0
+        # UCCD
+        for i in range(n_fermi):
+            for j in range(i+1,n_fermi):
+                for a in range(n_fermi,n_qubits):
+                    for b in range(a+1,n_qubits):
+                        if d_j == t+self.num_S:
+                            qc = self.dUCCD(qc,qb,qa,theta[rho][t],i,j,a,b)
+                            continue
+
+                        # Pauli-z
+                        for k in range(i+1,j):
+                            #qc.u1(np.pi,qb[k]) # Z gate
+                            qc.z(qb[k]) # Z gate
+                        for l in range(a+1,b):
+                            #qc.u1(np.pi,qb[l]) # Z gate
+                            qc.z(qb[l]) # Z gate
+
+                        # YXXX
+                        #qc.u3(-np.pi/2,-np.pi/2,np.pi/2,qb[i]) # Rx(-pi/2)
+                        qc.rx(-np.pi/2,qb[i]) # Rx(-pi/2)
+                        #qc.u2(0,np.pi/2,qb[j]) # H gate 
+                        qc.h(qb[j])
+                        #qc.u2(0,np.pi/2,qb[a]) # H gate
+                        qc.h(qb[a])
+                        #qc.u2(0,np.pi/2,qb[b]) # H gate
+                        qc.h(qb[b])
+
+                        qc.cx(qb[i],qb[b])
+                        qc.cx(qb[j],qb[b])
+                        qc.cx(qb[a],qb[b])
+
+                        #qc.u1(-theta[rho][t]/8,qb[b]) # Rz
+                        qc.rz(-theta[rho][t]/8,qb[b]) # Rz
+
+                        qc.cx(qb[a],qb[b])
+                        qc.cx(qb[j],qb[b])
+                        qc.cx(qb[i],qb[b])
+
+                        #qc.u3(np.pi/2,-np.pi/2,np.pi/2,qb[i]) # Rx(pi/2)
+                        qc.rx(np.pi/2,qb[i]) # Rx(-pi/2)
+                        #qc.u2(0,np.pi/2,qb[j]) # H gate 
+                        qc.h(qb[j])
+                        #qc.u2(0,np.pi/2,qb[a]) # H gate
+                        qc.h(qb[a])
+                        #qc.u2(0,np.pi/2,qb[b]) # H gate
+                        qc.h(qb[b])
+
+                        t += 1
         return qc
 
 
