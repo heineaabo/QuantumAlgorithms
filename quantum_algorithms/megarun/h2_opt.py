@@ -26,25 +26,32 @@ option_noisy_UCC = {'shots':shots,'print':False,
 R = 0.74
 h,v,Enuc,E = get_h2_matrix(R)
 h2 = SecondQuantizedHamiltonian(n,l,h,v,nuclear_repulsion=Enuc,add_spin=True)
-ev,vv = FCI(n,l,h2.h,h2.v,ret_all=True)
-fci_coeffs[i] = vv[:,0].real
-FCIs[i] = E['fci']
-FCIs[i] = ev[0].real
-HFs[i] = E['hf']
-CCs[i] = E['ccsd']
+print('FCI: ',E['fci'])
+#hf = E['hf']
+#cc = E['ccsd']
 
 
 h2.group_paulis(qwc=True,gc=True)
 
-ansatze = ['RYPAIRING','UCCD','UCCDr','UCCSD','UCCSDr']
-methods = ['Cobyla','Powell','Nelder-Mead','SPSA']
+#ansatze = ['RYPAIRING','UCCD','UCCDr','UCCSD','UCCSDr']
+ansatze = ['UCCSD','UCCSDr']
+methods = ['nelder-mead']
+#methods = ['cobyla','powell','nelder-mead','SPSA']
 for i,ansatz in enumerate(ansatze):
     for j,method in enumerate(methods):
+        print('Now: {} with {}'.format(ansatz,method))
         if method == 'SPSA':
             optim = QKSPSA()
         else:
-            optim = Minimizer(method,tol=1/(100*shots),disp=False)
-    model = VQE(h2,optim,ansatz,options=option_ideal)
-    np.save('{}/E_conv_R{}_{}.npy'.format(method,074,ansatz),np.asarray(model.energies))
+            optim = Minimizer(method,disp=False,adapt=True)
+            #optim = Minimizer(method,tol=1/(100*shots),disp=False)
+        model = VQE(h2,optim,ansatz,options=option_ideal)
+        theta = model.optimize()
+        np.save('H2/{}/E_conv_R{}_{}_fulltol.npy'.format(method,'074',ansatz),np.asarray(model.energies))
+        #if method == 'powell':
+        #    theta = [theta]
+        mean,var = model.get_mean(theta)
+        print(mean)
+        np.save('H2/{}/E_R{}_final_{}_fulltol.npy'.format(method,'074',ansatz),np.asarray(mean))
 
 
