@@ -29,8 +29,8 @@ option_noisy_UCC = {'shots':shots,'print':False,
 
 
 ######## QDOT
-omegas = [1] #np.arange(0.1,3.0,0.02)
-#omegas = omegas[[i for i in range(0,len(omegas),5)]]
+omegas = np.arange(0.1,3.0,0.02)
+omegas = omegas[[i for i in range(0,len(omegas),5)]]
 
 FCIs = np.zeros_like(omegas)
 HFs = np.zeros_like(omegas)
@@ -52,12 +52,12 @@ VARs_noisy_RYRZ = np.zeros_like(omegas)
 vqe_coeffs_noisy_RYRZ = np.zeros((len(omegas),6)) 
 
 # UCC
-Es_ideal_UCCr = np.zeros_like(omegas)
-VARs_ideal_UCCr = np.zeros_like(omegas)
-vqe_coeffs_ideal_UCCr = np.zeros((len(omegas),6)) 
-Es_noisy_UCCr = np.zeros_like(omegas)
-VARs_noisy_UCCr = np.zeros_like(omegas)
-vqe_coeffs_noisy_UCCr = np.zeros((len(omegas),6)) 
+#Es_ideal_UCCr = np.zeros_like(omegas)
+#VARs_ideal_UCCr = np.zeros_like(omegas)
+#vqe_coeffs_ideal_UCCr = np.zeros((len(omegas),6)) 
+#Es_noisy_UCCr = np.zeros_like(omegas)
+#VARs_noisy_UCCr = np.zeros_like(omegas)
+#vqe_coeffs_noisy_UCCr = np.zeros((len(omegas),6)) 
 Es_ideal_UCC = np.zeros_like(omegas)
 VARs_ideal_UCC = np.zeros_like(omegas)
 vqe_coeffs_ideal_UCC = np.zeros((len(omegas),6)) 
@@ -106,20 +106,20 @@ for omega in tqdm(omegas):
     Es_ideal_UCC[i],VARs_ideal_UCC[i] = model.get_mean(theta,N=10000,M=10)
     vqe_coeffs_ideal_UCC[i] = model.get_state_coeff(theta)
     # r
-    model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCDr',options=option_ideal)
-    theta = model.optimize()
-    Es_ideal_UCCr[i],VARs_ideal_UCCr[i] = model.get_mean(theta,N=10000,M=10)
-    vqe_coeffs_ideal_UCCr[i] = model.get_state_coeff(theta)
+    #model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCDr',options=option_ideal)
+    #theta = model.optimize()
+    #Es_ideal_UCCr[i],VARs_ideal_UCCr[i] = model.get_mean(theta,N=10000,M=10)
+    #vqe_coeffs_ideal_UCCr[i] = model.get_state_coeff(theta)
     ## Noisy
     model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCSD',options=option_noisy_UCC)
     theta = model.optimize()
     Es_noisy_UCC[i],VARs_noisy_UCC[i] = model.get_mean(theta,N=10000,M=10)
     vqe_coeffs_noisy_UCC[i] = model.get_state_coeff(theta)
     #r
-    model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCDr',options=option_noisy_UCC)
-    theta = model.optimize()
-    Es_noisy_UCCr[i],VARs_noisy_UCCr[i] = model.get_mean(theta,N=10000,M=10)
-    vqe_coeffs_noisy_UCCr[i] = model.get_state_coeff(theta)
+    #model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCDr',options=option_noisy_UCC)
+    #theta = model.optimize()
+    #Es_noisy_UCCr[i],VARs_noisy_UCCr[i] = model.get_mean(theta,N=10000,M=10)
+    #vqe_coeffs_noisy_UCCr[i] = model.get_state_coeff(theta)
 
     i += 1
 
@@ -128,24 +128,24 @@ np.save('new_qdot/fci.npy',FCIs)
 np.save('new_qdot/hf.npy',HFs)
 np.save('new_qdot/fci_coeff.npy',fci_coeffs)
 ## RYRZ
-np.save('new_qdot/RYRZ_E_i.npy',Es_ideal_RYRZ)
-np.save('new_qdot/RYRZ_var_i.npy',VARs_ideal_RYRZ)
-np.save('new_qdot/RYRZ_coeff_i.npy',vqe_coeffs_ideal_RYRZ)
-np.save('new_qdot/RYRZ_E_n.npy',Es_noisy_RYRZ)
-np.save('new_qdot/RYRZ_var_n.npy',VARs_noisy_RYRZ)
-np.save('new_qdot/RYRZ_coeff_n.npy',vqe_coeffs_noisy_RYRZ)
+np.save('new_qdot/new_RYRZ_E_i.npy',Es_ideal_RYRZ)
+np.save('new_qdot/new_RYRZ_var_i.npy',VARs_ideal_RYRZ)
+np.save('new_qdot/new_RYRZ_coeff_i.npy',vqe_coeffs_ideal_RYRZ)
+np.save('new_qdot/new_RYRZ_E_n.npy',Es_noisy_RYRZ)
+np.save('new_qdot/new_RYRZ_var_n.npy',VARs_noisy_RYRZ)
+np.save('new_qdot/new_RYRZ_coeff_n.npy',vqe_coeffs_noisy_RYRZ)
 ## UCCSD
-np.save('new_qdot/UCCSD_E_i.npy',Es_ideal_UCC)
-np.save('new_qdot/UCCSD_var_i.npy',VARs_ideal_UCC)
-np.save('new_qdot/UCCSD_coeff_i.npy',vqe_coeffs_ideal_UCC)
-np.save('new_qdot/UCCSD_E_n.npy',Es_noisy_UCC)
-np.save('new_qdot/UCCSD_var_n.npy',VARs_noisy_UCC)
-np.save('new_qdot/UCCSD_coeff_n.npy',vqe_coeffs_noisy_UCC)
+np.save('new_qdot/new_UCCSD_E_i.npy',Es_ideal_UCC)
+np.save('new_qdot/new_UCCSD_var_i.npy',VARs_ideal_UCC)
+np.save('new_qdot/new_UCCSD_coeff_i.npy',vqe_coeffs_ideal_UCC)
+np.save('new_qdot/new_UCCSD_E_n.npy',Es_noisy_UCC)
+np.save('new_qdot/new_UCCSD_var_n.npy',VARs_noisy_UCC)
+np.save('new_qdot/new_UCCSD_coeff_n.npy',vqe_coeffs_noisy_UCC)
 ## UCCDr
-np.save('new_qdot/UCCDr_E_i.npy',Es_ideal_UCCr)
-np.save('new_qdot/UCCDr_var_i.npy',VARs_ideal_UCCr)
-np.save('new_qdot/UCCDr_coeff_i.npy',vqe_coeffs_ideal_UCCr)
-np.save('new_qdot/UCCDr_E_n.npy',Es_noisy_UCCr)
-np.save('new_qdot/UCCDr_var_n.npy',VARs_noisy_UCCr)
-np.save('new_qdot/UCCDr_coeff_n.npy',vqe_coeffs_noisy_UCCr)
+#np.save('new_qdot/UCCDr_E_i.npy',Es_ideal_UCCr)
+#np.save('new_qdot/UCCDr_var_i.npy',VARs_ideal_UCCr)
+#np.save('new_qdot/UCCDr_coeff_i.npy',vqe_coeffs_ideal_UCCr)
+#np.save('new_qdot/UCCDr_E_n.npy',Es_noisy_UCCr)
+#np.save('new_qdot/UCCDr_var_n.npy',VARs_noisy_UCCr)
+#np.save('new_qdot/UCCDr_coeff_n.npy',vqe_coeffs_noisy_UCCr)
 
