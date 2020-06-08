@@ -19,23 +19,23 @@ provider = qk.IBMQ.get_provider('ibm-q')
 #qcomp = provider.get_backend('ibmq_essex')
 qcomp = provider.get_backend('ibmq_london')
 
-np.save('ibmq_energies.npy',np.array([]))
-np.save('ibmq_theta.npy',np.array([]))
+np.save('.ibmq_energies.npy',np.array([]))
+np.save('.ibmq_theta.npy',np.array([]))
 
 l = 4     # number of spin orbitals / number of qubits
 n = 2     # Number of occupied spin orbitals
-delta = 1 # Level spacing
-g = 1     # Interaction strength
+
+R = 0.4
 
 h,v,Enuc,E = get_h2_matrix(R)
 h2 = SecondQuantizedHamiltonian(n,l,h,v,nuclear_repulsion=Enuc,add_spin=True)
-print('Real FCI:',E['fci']
-print('HF:',E['hf']
+print('Real FCI:',E['fci'])
+print('HF:',E['hf'])
 
-Efci = FCI(n,l,h,v)
+Efci = FCI(n,l,h2.h,h2.v)
 print('FCI energy :',Efci+Enuc,Efci-Enuc)
 
-h2.group_paulis(qwc=True,gc=True)
+h2.group_paulis(qwc=True,gc=True,ibmq=True)
 #options = {'count_states':False,'shots':1000,'print':True}
 options_i = {'shots':2000,'optimization_level':1,
            #'noise_model':True,
@@ -57,12 +57,12 @@ options_q = {'shots':2000,
            #'coupling_map':True,
            'print':True}
 #model = VQE(h2,Minimizer('Cobyla',tol=1e-05),'RYPAIRING',options=options_i)
-modelq = VQE(h2,Minimizer('Cobyla',tol=1e-05,max_iter=70),'RYPAIRING',options=options_q)
+modelq = VQE(h2,Minimizer('Cobyla',tol=1e-06,max_iter=70),'RYPAIRING',options=options_q)
 theta = modelq.optimize()
-print(theta)
-#print(model.get_mean(theta))
-#print('simulation')
-#print(model.expval(theta))
-#print('Real quantum')
-#print(modelq.expval(theta))
+
+save_str = '0' if R < 1 else ''
+save_str += str(int(R*100))
+
+np.save('E_{}.npy'.format(save_str),np.load('.ibmq_energies.npy'))
+np.save('t_{}.npy'.format(save_str),np.load('.ibmq_theta.npy'))
 
