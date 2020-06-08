@@ -53,7 +53,7 @@ for omega in tqdm(omegas):
 
     ### UCC
     # Ideal
-    model = VQE(h2,Minimizer('Cobyla',tol=1/(1000*shots),disp=False),'UCCSDr',options=option_ideal)
+    model = VQE(h2,Minimizer('Cobyla',tol=1/(100*shots),disp=False),'UCCSD',options=option_ideal)
     theta = model.optimize()
     Es_ideal_UCC[i],VARs_ideal_UCC[i] = model.get_mean(theta,N=10000,M=10)
     vqe_coeffs_ideal_UCC[i] = model.get_state_coeff(theta)
@@ -65,7 +65,7 @@ np.save('fci.npy',FCIs)
 np.save('hf.npy',HFs)
 np.save('fci_coeff.npy',fci_coeffs)
 ## UCCSDr
-np.save('UCCSDr_E_i.npy',Es_ideal_UCC)
-np.save('UCCSDr_var_i.npy',VARs_ideal_UCC)
-np.save('UCCSDr_coeff_i.npy',vqe_coeffs_ideal_UCC)
+np.save('UCCSD_E_i.npy',Es_ideal_UCC)
+np.save('UCCSD_var_i.npy',VARs_ideal_UCC)
+np.save('UCCSD_coeff_i.npy',vqe_coeffs_ideal_UCC)
 
