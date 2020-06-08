@@ -12,8 +12,8 @@ sys.path.append('../../../../../QuantumCircuitOptimizer')
 from quantum_circuit import QuantumCircuit,SecondQuantizedHamiltonian,PairingHamiltonian
 
 
-l = 4     # number of spin orbitals / number of qubits
-n = 2     # Number of occupied spin orbitals
+l = 6     # number of spin orbitals / number of qubits
+n = 4     # Number of occupied spin orbitals
 
 shots = 8192
 option_ideal = {'shots':shots,'print':False}
@@ -30,40 +30,15 @@ option_noisy_UCC = {'shots':shots,'print':False,
 
 ######## QDOT
 omegas = np.arange(0.1,3.0,0.02)
-omegas = [] #omegas[[i for i in range(0,len(omegas),5)]]
+omegas = omegas[[i for i in range(0,len(omegas),5)]]
 
 FCIs = np.zeros_like(omegas)
 HFs = np.zeros_like(omegas)
-fci_coeffs = np.zeros((len(omegas),6)) 
-#
-#Es_ideal_RY = np.zeros_like(omegas)
-#VARs_ideal_RY = np.zeros_like(omegas)
-#vqe_coeffs_ideal_RY = np.zeros((len(omegas),6)) 
-#Es_noisy_RY = np.zeros_like(omegas)
-#VARs_noisy_RY = np.zeros_like(omegas)
-#vqe_coeffs_noisy_RY = np.zeros((len(omegas),6)) 
+fci_coeffs = np.zeros((len(omegas),15)) 
 
-# RYRZ
-Es_ideal_RYRZ = np.zeros_like(omegas)
-VARs_ideal_RYRZ = np.zeros_like(omegas)
-vqe_coeffs_ideal_RYRZ = np.zeros((len(omegas),6)) 
-Es_noisy_RYRZ = np.zeros_like(omegas)
-VARs_noisy_RYRZ = np.zeros_like(omegas)
-vqe_coeffs_noisy_RYRZ = np.zeros((len(omegas),6)) 
-
-# UCC
-#Es_ideal_UCCr = np.zeros_like(omegas)
-#VARs_ideal_UCCr = np.zeros_like(omegas)
-#vqe_coeffs_ideal_UCCr = np.zeros((len(omegas),6)) 
-#Es_noisy_UCCr = np.zeros_like(omegas)
-#VARs_noisy_UCCr = np.zeros_like(omegas)
-#vqe_coeffs_noisy_UCCr = np.zeros((len(omegas),6)) 
 Es_ideal_UCC = np.zeros_like(omegas)
 VARs_ideal_UCC = np.zeros_like(omegas)
-vqe_coeffs_ideal_UCC = np.zeros((len(omegas),6)) 
-Es_noisy_UCC = np.zeros_like(omegas)
-VARs_noisy_UCC = np.zeros_like(omegas)
-vqe_coeffs_noisy_UCC = np.zeros((len(omegas),6)) 
+vqe_coeffs_ideal_UCC = np.zeros((len(omegas),15)) 
 
 i = 0
 for omega in tqdm(omegas):
