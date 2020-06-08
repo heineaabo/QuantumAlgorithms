@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 x   = np.load('omegas.npy')
 fci = np.load('fci.npy')
 hf  = np.load('hf.npy')
+cc  = np.load('cc.npy')
 
 ucc = np.load('UCCSDr_E_i.npy')
 
