@@ -17,10 +17,10 @@ n = 4     # Number of occupied spin orbitals
 delta = 1 # Level spacing
 
 
-gs = np.arange(-2,2,0.4)
+gs = np.arange(5,10,0.4)
 shots = 8000
 #ansatze = ['RYRZ','UCCD']
-ansatze = ['RYRZ']
+ansatze = ['UCCD']
 depth = 1
 #for g in gs:
 for ansatz in ansatze:
@@ -48,12 +48,14 @@ for ansatz in ansatze:
                    #'optimization_level':1,
                    #'seed':1,
                    'print':False}
-        model = VQE(pairing,Minimizer('Cobyla',tol=1e-05,disp=False),ansatz,ansatz_depth=depth,options=options)
+        model = VQE(pairing,Minimizer('Cobyla',tol=1e-06,disp=False),ansatz,ansatz_depth=depth,options=options)
         theta = model.optimize()
         data[i],_ = model.get_mean(theta)
+        print(data[i])
         coeff[i] = model.get_state_coeff(theta)
         i += 1
-    np.save('E_{}_{}shots.npy'.format(ansatz,shots),data)
-    np.save('coeff_{}_{}shots.npy'.format(ansatz,shots),coeff)
-    np.save('fci.npy',fci)
+    np.save('E_{}_{}shots_5g_10g.npy'.format(ansatz,shots),data)
+    np.save('coeff_{}_{}shots_5g_10g.npy'.format(ansatz,shots),coeff)
+    #np.save('fci.npy',fci)
+    #np.save('hf.npy',hf)
 
