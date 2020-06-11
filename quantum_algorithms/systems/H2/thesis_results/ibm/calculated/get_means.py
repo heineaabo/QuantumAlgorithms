@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from tikzplotlib import save
 
-strs = ['030','040','050','060','074','100','130','160','190','220','250','280']
-Rs = [0.3,0.4,0.5,0.6,0.74,1.0,1.3,1.6,1.9,2.2,2.5,2.8]
+strs = ['030','040','050','060','074','090','100','110','130','160','190','220','250','280']
+Rs = [0.3,0.4,0.5,0.6,0.74,0.9,1.0,1.1,1.3,1.6,1.9,2.2,2.5,2.8]
 
 hf = np.load('hf.npy')
 fci = np.load('fci.npy')
@@ -29,8 +29,9 @@ for i,s in enumerate(strs):
 fci_real = np.load('../../../../../megarun/H2/cc.npy')
 hf_real = np.load('../../../../../megarun/H2/hf.npy')
 x_real = np.load('../../../../../megarun/H2/bonds.npy')
-x2 = [0,5,10,15,22,35,50,65,80,95,110,125]
+x2 = [0,5,10,15,22,30,35,40,50,65,80,95,110,125]
 fci2 = fci_real[x2]
+print(x_real[x2])
 plt.figure()
 plt.plot(x_real,fci_real,label='FCI')
 plt.plot(x_real,hf_real,label='HF')
