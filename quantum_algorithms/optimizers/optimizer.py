@@ -9,13 +9,15 @@ class Minimizer:
                        max_iter=200, # Minimizer iterations.
                        max_eval=200,  # Funtion evaluations.
                        tol=1e-08,
-                       disp=True):
+                       disp=True,
+                       adapt=False):
         #super().__init__()
         self.max_iter = max_iter
         self.max_eval = max_eval
         self.tol = tol
         self.method = method
         self.disp = disp
+        self.gradient = None
 
         # Set scipy.minimize options
         self.bounds = None
@@ -26,11 +28,10 @@ class Minimizer:
         self.options = {'disp':self.disp,
                         'maxiter': self.max_iter,
                         max_eval_str: self.max_eval}
-        if method == 'Cobyla':
+        if method.lower() == 'cobyla':
             del self.options[max_eval_str]
-        #if method == 'Nelder-Mead':
-       #     if len(theta) > 5:
-       #         self.options['adaptive'] = True
+        if method.lower() == 'nelder-mead' and adapt == True:
+            self.options['adaptive'] = True
 
 
 
@@ -41,6 +42,7 @@ class Minimizer:
                           bounds=self.bounds,
                           method=self.method,
                           options=self.options,
+                          jac=self.gradient,
                           tol=self.tol)
         params = result.x
         return params
@@ -48,6 +50,9 @@ class Minimizer:
 
     def set_loss_function(self,loss_function):
         self.L = loss_function
+
+    def set_gradient_function(self,gradient_function):
+        self.gradient = gradient_function
 
     def set_option(self,option,value):
         if option == 'tol':
@@ -73,7 +78,8 @@ class QKSPSA:
         self.L = loss_function
 
     def __call__(self,theta):
-        import numpy as np
-        a = self.optimizer.optimize(len(theta),self.L,initial_point=theta) 
+        #import numpy as np
+        params = self.optimizer.optimize(len(theta),self.L,initial_point=theta) 
+        return params[0]
 
 

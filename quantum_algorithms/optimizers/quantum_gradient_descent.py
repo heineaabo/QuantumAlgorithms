@@ -13,7 +13,7 @@ class QuantumGradientDescent:
                  method='',
                  step_length=1e-1, 
                  max_iter=200, # Number of iterations (2 func_evals per iter)
-                 tol=1e-08, # Convergence tolerance
+                 tol=1e-05, # Convergence tolerance
                  avg_num=0, # Number of gradients averaged, 0 if not.
                  feedback=True):
         self.method = method
@@ -25,16 +25,17 @@ class QuantumGradientDescent:
         self.thetas = []
         self.grads = []
         self.avg_num = avg_num
+        self._gradient = None
 
-    def __gradient_simple(self,theta):
-        main_eval = self.L(new_theta) 
-        param_evals = np.zeros(num_params)
-        for k in range(num_params):
-            copy = theta
-            copy[k] += np.pi*0.5
-            param_evals[k] = self.L(copy)
-        grad = main_eval - param_evals
-        return grad
+    #def __gradient_simple(self,theta):
+    #    main_eval = self.L(new_theta) 
+    #    param_evals = np.zeros(num_params)
+    #    for k in range(num_params):
+    #        copy = theta
+    #        copy[k] += np.pi*0.5
+    #        param_evals[k] = self.L(copy)
+    #    grad = main_eval - param_evals
+    #    return grad
 
     def __call__(self,theta):
         if self.method.lower() == 'adam':
@@ -47,19 +48,19 @@ class QuantumGradientDescent:
             new_theta = self._vanilla(theta)
         return new_theta
 
-    def _gradient(self,theta):
-        grad = np.zeros_like(theta)
-        for k in range(len(theta)):
-            e_k = np.zeros_like(theta)
-            e_k[k] = 0.5*np.pi
-            left = self.L(theta+e_k)
-            right = self.L(theta-e_k)
-            grad[k] = 0.5*(right - left)
-        # Gradient averaging
-        self.grads.append(grad)
-        if len(self.grads) > self.avg_num and self.avg_num != 0:
-            grad = np.mean(self.grads[-self.avg_num:],axis=0)
-        return grad
+    #def _gradient(self,theta):
+    #    grad = np.zeros_like(theta)
+    #    for k in range(len(theta)):
+    #        e_k = np.zeros_like(theta)
+    #        e_k[k] = 0.5*np.pi
+    #        left = self.L(theta+e_k)
+    #        right = self.L(theta-e_k)
+    #        grad[k] = 0.5*(right - left)
+    #    # Gradient averaging
+    #    self.grads.append(grad)
+    #    if len(self.grads) > self.avg_num and self.avg_num != 0:
+    #        grad = np.mean(self.grads[-self.avg_num:],axis=0)
+    #    return grad
 
     def _adam(self,theta):
         alpha = 1 #self.step_length
@@ -148,5 +149,8 @@ class QuantumGradientDescent:
             
     def set_loss_function(self,loss_function):
         self.L = loss_function
+
+    def set_gradient_function(self,gradient_function):
+        self._gradient = gradient_function
 
 

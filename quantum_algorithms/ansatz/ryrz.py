@@ -1,77 +1,7 @@
 import numpy as np
 import qiskit as qk
 
-class RYpairing:
-    """
-    """
-
-    def __init__(self,n,l,depth=1,occupied=1,pair=True):
-        self.n = n
-        self.l = l
-        self.depth = depth
-        self.occupied = occupied
-        self.pair = pair # If particles should be in pairs
-
-    def __call__(self,theta,qc,qb,qa=None,i=None):
-        """
-        Pairing ansatz. For 2 particles and 4 orbitals.
-        """
-        #if theta == None:
-        #    theta = self.new_parameters()
-        theta = self.sort_theta(theta)
-        qc = self.prepare_Hartree_state(qc,qb)
-        #for d in range(self.depth):
-        for d in range(1):
-            qc.u3(theta[0],0,0,qb[0]) # Ry gate
-            # Entanglers
-            qc.u3(np.pi,0,np.pi,qb[0])# X gate
-            qc.cx(qb[0],qb[1])        # CNOT gate
-            qc.cx(qb[0],qb[2])        # CNOT gate
-            qc.cx(qb[0],qb[3])        # CNOT gate
-            qc.u3(np.pi,0,np.pi,qb[0])# X gate
-        return qc
-
-    def new_parameters(self):
-        """
-        New initial parameters.
-        """
-        return 2*np.pi*np.random.randn(1)
-
-    def prepare_Hartree_state(self,qc,qb):
-        """
-        Prepares Hartree-Fock state. Assume initialized to ❘0...0⟩ before 
-        Example for n=2 and l=4 -> ❘1100⟩
-        """
-        # Reference state
-        if self.occupied: #❘1...0...⟩
-            for k in range(self.n):
-                qc.x(qb[k])
-        else: #❘0...1...⟩
-            for k in range(self.n,self.l):
-                qc.x(qb[k])
-        return qc
-
-    def sort_theta(self,theta):
-        return theta 
-
-def AND(qc,qb,ctrl,targ):
-    c1 = qb[ctrl[0]]
-    c2 = qb[ctrl[1]]
-    t = qb[targ]
-    # CH gate
-    qc.u3(-np.pi/4,0,0,t) # Ry gate
-    qc.cx(c1,t)
-    qc.u3(np.pi/4,0,0,t) # Ry gate
-    # CoX
-    qc.u3(np.pi,0,np.pi,c2)# X gate
-    qc.cx(c2,t)
-    qc.u3(np.pi,0,np.pi,c2)# X gate
-    # CH gate
-    qc.u3(-np.pi/4,0,0,t) # Ry gate
-    qc.cx(c1,t)
-    qc.u3(np.pi/4,0,0,t) # Ry gate
-    return qc    
-
+from .AND_gates import *
 class RYRZ:
     """
     """
@@ -90,6 +20,17 @@ class RYRZ:
         #    theta = self.new_parameters()
         theta = self.sort_theta(theta)
         qc = self.prepare_Hartree_state(qc,qb)
+        #if self.n == 2 and self.l == 3:
+        #    qc = self.n2l3(theta,qc,qb)
+        if self.n == 2 and self.l == 4:
+            qc = self.n2l4(theta,qc,qb)
+        elif self.n == 4 and self.l == 8:
+            qc = self.n4l8(theta,qc,qb)
+        else:
+            print('No ansatz action')
+        return qc
+
+    def n2l4(self,theta,qc,qb):
         ### Rotation layer
         for j in range(self.depth):
             for i in range(self.n):
@@ -115,15 +56,93 @@ class RYRZ:
         for i in range(self.n):
             qc.cx(qb[i],qb[self.n+1])
         ### Doubles excitation
-        qc = AND(qc,qb,[0,1],2)
+        qc = AND_00(qc,qb,[0,1],2)
         qc.cx(qb[self.n],qb[self.n+1])# CNOT gate
+        return qc
+
+    def n2l3(self,theta,qc,qb):
+        print(theta)
+        for j in range(self.depth):
+            qc.u3(theta[0,2*j],0,0,qb[0]) # Ry gate
+            qc.u1(theta[0,2*j+1],qb[0])     # Rz gate
+            qc.cx(qb[0],qb[1])
+            qc.u3(theta[1,2*j],0,0,qb[1]) # Ry gate
+            qc.u1(theta[1,2*j+1],qb[1])     # Rz gate
+
+        qc.cx(qb[0],qb[2])
+        qc.cx(qb[1],qb[2])
+
+        ## Doubles
+        qc = AND_00(qc,qb,[0,1],2)
+
+        qc.cx(qb[2],qb[1])
+        qc.cx(qb[2],qb[0])
+
+
+        ### fix double
+        #qc.cx(qb[2],qb[0])
+        #qc = AND_10(qc,qb,[2,0],1)
+        #qc.cx(qb[2],qb[0])
+        #qc.h(qb[1])
+        #qc.cx(qb[2],qb[0])
+        #qc = AND_10(qc,qb,[2,0],1)
+        #qc.cx(qb[2],qb[0])
+        #qc.cx(qb[1],qb[2])
+        #qc = AND_10(qc,qb,[1,2],0)
+        #qc.cx(qb[1],qb[2])
+        return qc
+
+    def n4l8(self,theta,qc,qb):
+        for j in range(self.depth):
+            qc.u3(theta[0,2*j],0,0,qb[0]) # Ry gate
+            qc.u1(theta[0,2*j+1],qb[0])     # Rz gate
+            qc.cx(qb[0],qb[2])
+            qc.u3(theta[1,2*j],0,0,qb[2]) # Ry gate
+            qc.u1(theta[1,2*j+1],qb[2])     # Rz gate
+
+        for j in range(self.depth):
+            qc.u1(-0.5*theta[3,-2*j-1],qb[4])     # Rz gate
+            qc.u3(-0.5*theta[3,-2*j-2],0,0,qb[4]) # Ry gate
+        qc.cx(qb[0],qb[4])
+        qc.cx(qb[2],qb[4])
+        for j in range(self.depth):
+            qc.u3(0.5*theta[3,2*j],0,0,qb[4]) # Ry gate
+            qc.u1(0.5*theta[3,2*j+1],qb[4])     # Rz gate
+
+        qc.cx(qb[0],qb[6])
+        qc.cx(qb[2],qb[6])
+        qc.cx(qb[4],qb[6])
+
+        # Doubles
+        qc.cx(qb[4],qb[6])
+        qc = AND_00(qc,qb,[0,2],4)
+        qc.cx(qb[4],qb[6])
+
+        # Flip opposite spin qubits
+        # Occ1
+        qc.x(qb[0])
+        qc.cx(qb[0],qb[1])
+        qc.x(qb[0])
+        # Occ2
+        qc.x(qb[2])
+        qc.cx(qb[2],qb[3])
+        qc.x(qb[2])
+        # Vir1
+        qc.cx(qb[4],qb[5])
+        # Vir2
+        qc.cx(qb[6],qb[7])
         return qc
 
     def new_parameters(self):
         """
         New initial parameters.
         """
-        return np.zeros((self.n+self.l)*self.depth)
+        N = 0
+        if self.l % 2 == 0:
+            N = (self.n+self.l)*self.depth
+        else:
+            N = 2*self.n*self.depth
+        return np.zeros(N)
         #return 2*np.pi*np.random.randn((self.n+self.l)*self.depth)
 
     def prepare_Hartree_state(self,qc,qb):
@@ -134,10 +153,12 @@ class RYRZ:
         # Reference state
         if self.occupied: #❘1...0...⟩
             for k in range(self.n):
-                qc.x(qb[k])
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
         else: #❘0...1...⟩
             for k in range(self.n,self.l):
-                qc.x(qb[k])
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
         return qc
 
     def sort_theta(self,theta):

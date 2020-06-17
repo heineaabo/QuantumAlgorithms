@@ -2,10 +2,10 @@ import numpy as np
 import qiskit as qk
 from qiskit.extensions.standard import *
 from tools import print_state,get_state_count
-from ansatz import UnitaryCoupledCluster,RYRZ,RY,RYpairing
+from ansatz import UnitaryCoupledCluster,RYRZ,RY,RYpairing,UCC5
 from algorithm import QuantumAlgorithm
 from attributes import QuantumComputer
-from optimizers import RyGradient
+from optimizers import RyGradient,QuantumGradientDescent
 
 class VQE(QuantumAlgorithm):
     def __init__(self,
@@ -35,13 +35,21 @@ class VQE(QuantumAlgorithm):
             self.conv = hamiltonian.conv # Occupation convention
 
         super().__init__(self.n_qubits,options)
+        #assert self.ibmq
         # Unitary Coupled Cluster ansatz
+        self.ansatz_string = ansatz
         if isinstance(ansatz,str):
             if ansatz[:3].upper() == 'UCC':
-                self.ansatz = UnitaryCoupledCluster(self.n_fermi,
-                                                    self.n_qubits,
-                                                    ansatz[3:].upper(),
-                                                    depth=ansatz_depth)
+                #self.ansatz = UCC5(self.n_fermi,self.n_qubits,
+                #                   ansatz[3:].upper(),depth=ansatz_depth)
+                if self.ibmq:
+                    self.ansatz = UCC5(self.n_fermi,self.n_qubits,
+                                       ansatz[3:].upper(),depth=ansatz_depth)
+                else:
+                    self.ansatz = UnitaryCoupledCluster(self.n_fermi,
+                                                        self.n_qubits,
+                                                        ansatz[3:].upper(),
+                                                        depth=ansatz_depth)
                 if isinstance(hamiltonian,dict):
                     self.theta = hamiltonian.theta
                 else:
@@ -70,8 +78,12 @@ class VQE(QuantumAlgorithm):
         self.optimizer = optimizer
         if isinstance(optimizer,RyGradient):
             self.optimizer.set_vqe(self)
+        #elif isinstance(optimizer,QuantumGradientDescent):
         else:
             self.optimizer.set_loss_function(self.expval)
+            #self.optimizer.set_gradient_function(self.gradient)
+        #elif optimizer != None:
+        #    self.optimizer.set_loss_function(self.expval)
 
         # For counting states
         self.legal = 0
@@ -81,7 +93,7 @@ class VQE(QuantumAlgorithm):
         # For plotting progression from optimization
         self.energies = []
 
-    def expval(self,theta=None,callback=True):
+    def expval(self,theta=None,callback=True,p_mes=False):
         if theta is None:
             theta = self.theta
         E = 0
@@ -101,11 +113,15 @@ class VQE(QuantumAlgorithm):
             # Apply measurement transformation
             qc = pauli_string.prepare(qc,qb) 
             # Combine circuit with ansatz circuit
+            #print(qc)
             qc = qc_ansatz + qc
             # Measure circuit and add expectation value
             measurement = self.measure(qc,qb,cb)
             if self.meas_fitter != None:
                 measurement = self.meas_fitter.filter.apply(measurement)
+            if p_mes:
+                print(qc)
+                print(measurement)
             E += pauli_string.expectation(measurement,self.shots)
         if callback:
             if self.prnt:
@@ -113,12 +129,20 @@ class VQE(QuantumAlgorithm):
                 print('⟨E⟩ = {}'.format(E))
             self.energies.append(E)
             self.evals += 1
+        if self.ibmq:
+            np.save('.ibmq_energies.npy',np.asarray(self.energies))
+            thetaz = np.load('.ibmq_theta.npy')
+            thetaz = np.append(thetaz,theta)
+            np.save('.ibmq_theta.npy',thetaz)
         return E
 
     def optimize(self,theta=None):
         if theta == None:
             theta = self.theta
-        return self.optimizer(theta)
+        params = self.optimizer(theta)
+        if not isinstance(params,(list,tuple,np.ndarray)):
+            np.asarray(params)
+        return params
 
     def get_mean(self,theta,N=None,M=10):
         """
@@ -161,56 +185,56 @@ class VQE(QuantumAlgorithm):
                 coef[i] = measurement[state]
         return coef/self.shots
 
+
+    def print_circ_info(self):
+        theta = self.theta
+        # Prepare qiskit circuit and registers.
+        qb = qk.QuantumRegister(self.n_qubits)
+        cb = qk.ClassicalRegister(self.n_qubits)
+        qc = qk.QuantumCircuit(qb,cb)
+        qc = self.ansatz(theta,qc,qb)
+        measurement = self.measure(qc,qb,cb)
+        print('For ansatz {} with {} parameters:'.format(self.ansatz_string,len(theta)))
+        print('\t- Circuit depth: {} \n\t- CNOT gates: {} \n\t- Single qubit gates: {}'.format(qc.depth(),qc.count_ops()['cx'],qc.size()-qc.count_ops()['cx']))
+
     def optimize_gradient(self,
                           theta,
                           max_iters=200,
                           max_evals=200,
-                          step=1e-02, # Step length
-                          tol=1e-08):
+                          step_length=1e-01, # Step length
+                          tol=1e-05):
         self.energies = []
         qc,qb,qa,cb,ca = None,None,None,None,None
         new_theta = theta
+        qb = qk.QuantumRegister(self.n_qubits)
+        cb = qk.ClassicalRegister(self.n_qubits)
         for i in range(max_iters):
+            new_theta = theta
             E_inter = self.expval(new_theta)
             print('<E> =',E_inter)
+            grad = np.zeros_like(theta)
             for d_j in range(len(theta)):
                 im = 0
                 for pauli_string in self.circuit_list:
-                    factor = pauli_string[0].real
                     qubit_list = []
-                    qb = qk.QuantumRegister(self.n_qubits)
-                    cb = qk.ClassicalRegister(self.n_qubits)
+                    # New circuit
                     qc = qk.QuantumCircuit(qb,cb)
                     # Prepare ancilla qubit with Hadamard
                     qa = qk.QuantumRegister(1)
                     ca = qk.ClassicalRegister(1)
                     qc.add_register(qa,ca)
                     qc.h(qa[0])
-                    qc = self.ansatz(new_theta,qc,qb,qa,d_j)
-                    for qubit,gate in pauli_string[1:]:
-                        qc = self.add_gate(qubit,gate,qc,qb,qa)
-                        qubit_list.append(qubit)
+                    # Apply measurement transformation
+                    qc = pauli_string.prepare(qc,qb,qa=qa) 
+                    # Finish Hadamard test
                     qc.h(qa[0])
                     qc.rx(np.pi/2,qa[0])
-                    im += self.ancilla_measure(factor,qc,qa,ca)
-                print('Updating theta {} -> {} - {} = {}'.format(d_j,new_theta[d_j],im,new_theta[d_j]-im*step))
-                new_theta[d_j] -= im*step
+                    # Measure circuit and add expectation value
+                    measurement = self.measure(qc,qa,ca)
+                    im += self.ancilla_expectation(measurement)
+                #print('Updating theta {} -> {} - {} = {}'.format(d_j,new_theta[d_j],im,new_theta[d_j]-im*step))
+                new_theta[d_j] += im*step_length
+            theta = new_theta
             print('Iteration {} finished!'.format(i),new_theta)
         return theta
-
-    def ancilla_measure(self,factor,qc,qa,ca):
-        qc.measure(qa,ca)
-        job = qk.execute(qc, 
-                        backend = self.backend, 
-                        shots=self.shots,
-                        seed_transpiler=self.seed,
-                        seed_simulator=self.seed)
-        result = job.result().get_counts(qc)
-        im = 0
-        for key, value in result.items():
-            if key[0] == '0':
-                im += 1 - 2*(value/self.shots)
-            elif key[0] == '1':
-                im += 2*(value/self.shots) - 1
-        return factor*im
 

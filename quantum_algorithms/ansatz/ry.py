@@ -31,6 +31,9 @@ class RY:
                 qc = self._n1_l2(theta,qc,qb)
             else:
                 qc = self._n2_l4(theta,qc,qb)
+        elif self.n == 4 and self.l == 8:
+            if self.pairing:
+                qc = self._n2_l4(theta,qc,qb)
         else:
             print('WRONG INPUT')
         return qc
@@ -106,7 +109,7 @@ class RY:
         Define new parameters. 
         """
         num_params = 1
-        if self.n == 2 and self.l == 4:
+        if self.n == 2 and self.l == 4 or self.pairing:
             #num_params = 3 
             num_params = 5
         #return 2*np.pi*np.random.randn(num_params)
@@ -120,10 +123,12 @@ class RY:
         # Reference state
         if self.occupied: #❘1...0...⟩
             for k in range(self.n):
-                qc.x(qb[k])
-        elif not self.occupied: #❘0...1...⟩
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
+        else: #❘0...1...⟩
             for k in range(self.n,self.l):
-                qc.x(qb[k])
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
         return qc
 
     def sort_theta(self,theta):
@@ -132,4 +137,71 @@ class RY:
         """
         return theta
 
+
+class RYpairing:
+    """
+    """
+
+    def __init__(self,n,l,depth=1,occupied=1,pair=True):
+        self.n = n
+        self.l = l
+        self.depth = depth
+        self.occupied = occupied
+        self.pair = pair # If particles should be in pairs
+
+    def __call__(self,theta,qc,qb,qa=None,i=None):
+        """
+        Pairing ansatz. For 2 particles and 4 orbitals.
+        """
+        #if theta == None:
+        #    theta = self.new_parameters()
+        theta = self.sort_theta(theta)
+        if not isinstance(theta,(list,tuple,np.ndarray)):
+            theta = [theta]
+        qc = self.prepare_Hartree_state(qc,qb)
+        #for d in range(self.depth):
+
+        # As coupling map
+        qc.u3(theta[0],0,0,qb[1]) # Ry gate
+        # Entanglers
+        qc.u3(np.pi,0,np.pi,qb[1])# X gate
+        qc.cx(qb[1],qb[0])        # CNOT gate
+        qc.cx(qb[1],qb[2])        # CNOT gate
+        qc.cx(qb[1],qb[3])        # CNOT gate
+        qc.u3(np.pi,0,np.pi,qb[1])# X gate
+
+        # OLD
+        #qc.u3(theta[0],0,0,qb[0]) # Ry gate
+        ## Entanglers
+        #qc.u3(np.pi,0,np.pi,qb[0])# X gate
+        #qc.cx(qb[0],qb[1])        # CNOT gate
+        #qc.cx(qb[0],qb[2])        # CNOT gate
+        #qc.cx(qb[0],qb[3])        # CNOT gate
+        #qc.u3(np.pi,0,np.pi,qb[0])# X gate
+        return qc
+
+    def new_parameters(self):
+        """
+        New initial parameters.
+        """
+        return 2*np.pi*np.random.randn(1)
+
+    def prepare_Hartree_state(self,qc,qb):
+        """
+        Prepares Hartree-Fock state. Assume initialized to ❘0...0⟩ before 
+        Example for n=2 and l=4 -> ❘1100⟩
+        """
+        # Reference state
+        if self.occupied: #❘1...0...⟩
+            for k in range(self.n):
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
+        else: #❘0...1...⟩
+            for k in range(self.n,self.l):
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
+        return qc
+
+    def sort_theta(self,theta):
+        return theta 
 

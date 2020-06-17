@@ -41,10 +41,10 @@ class UnitaryCoupledCluster:
             if 'S' in self.trunc:
                 qc = self.UCCS(qc,qb,theta[0],rho,qa=qa,d_j=i)
             if 'D' in self.trunc:
-                if 'r' in self.trunc:
-                    # Reduced circuit for hydrogenic system
+                if 'R' in self.trunc:
                     qc = self.UCCD_hydrogenic(qc,qb,theta[1],rho,qa=qa,d_j=i)
                 else:
+                    # Reduced circuit for hydrogenic system
                     qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
                 #qc = self.UCCD(qc,qb,theta[1],rho,qa=qa,d_j=i)
         return qc
@@ -78,6 +78,11 @@ class UnitaryCoupledCluster:
         self.num_S = S
         self.num_D = D
         if self.mp2:
+            params = np.asarray(params)
+            if all([x.imag == 0 for x in params]):
+                params = params.real
+            else:
+                print('Imaginary parameters?')
             return np.asarray(params)
         else:
             return 2*np.pi*np.random.randn((self.num_S+self.num_D)*self.depth)
@@ -90,10 +95,12 @@ class UnitaryCoupledCluster:
         # Reference state
         if self.occupied: #❘1...0...⟩
             for k in range(self.n):
-                qc.x(qb[k])
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
         elif not self.occupied: #❘0...1...⟩
             for k in range(self.n,self.l):
-                qc.x(qb[k])
+                #qc.x(qb[k])
+                qc.u3(np.pi,0,np.pi,qb[k])
         return qc
 
     def sort_theta(self,theta):
@@ -107,7 +114,8 @@ class UnitaryCoupledCluster:
         thetaS = []
         thetaD = []
         if self.mp2:
-            assert len(theta) == (singles+doubles)
+            assert len(theta) == (singles+doubles),'WRONG LENGTH OF {} != {}'.format(theta,singles+doubles)
+
             thetaS.append(theta[:singles])
             thetaD.append(theta[singles:])
         else:
@@ -135,8 +143,10 @@ class UnitaryCoupledCluster:
                     qc = self.dUCCS(qc,qb,qa,theta[rho][t],i,a)
                     continue
                 # Pauli-z
-                for k in range(i+1,a):
-                    qc.z(qb[k])
+                #for k in range(i+1,a):
+                #    #qc.z(qb[k])
+                #    qc.cx(qb[k],qb[a]) 
+
                 # Pauli strings
                 qc.h(qb[i])
                 qc.rx(np.pi/2,qb[i])
@@ -149,8 +159,18 @@ class UnitaryCoupledCluster:
 
                 qc.cx(qb[i],qb[a])
 
+                ## Pauli-z
+                #for k in range(i+1,a):
+                #    #qc.z(qb[k])
+                #    qc.cx(qb[k],qb[a]) 
+
                 qc.rx(-np.pi/2,qb[i])
                 qc.rx(np.pi/2,qb[a])
+
+                # Pauli-z
+                #for k in range(i+1,a):
+                #    #qc.z(qb[k])
+                #    qc.cx(qb[k],qb[a]) 
 
                 qc.cx(qb[i],qb[a])
 
@@ -159,9 +179,14 @@ class UnitaryCoupledCluster:
 
                 qc.cx(qb[i],qb[a])
 
+                #for k in range(i+1,a):
+                #    #qc.z(qb[k])
+                #    qc.cx(qb[k],qb[a])
+
                 qc.h(qb[i])
                 qc.rx(-np.pi/2,qb[a])
                 qc.h(qb[a])
+
 
                 t += 1
 
@@ -189,9 +214,11 @@ class UnitaryCoupledCluster:
 
                         # Pauli-z
                         for k in range(i+1,j):
-                            qc.z(qb[k])
+                            qc.cx(qb[k],qb[b])
+                            #qc.z(qb[k])
                         for l in range(a+1,b):
-                            qc.z(qb[l])
+                            qc.cx(qb[l],qb[b])
+                            #qc.z(qb[l])
 
                         # Pauli strings
                         qc.h(qb[i])
@@ -247,8 +274,24 @@ class UnitaryCoupledCluster:
                         qc.cx(qb[j],qb[b])
                         qc.cx(qb[i],qb[b])
 
+                        # Pauli-z
+                        for k in range(i+1,j):
+                            qc.cx(qb[k],qb[b])
+                            #qc.z(qb[k])
+                        for l in range(a+1,b):
+                            qc.cx(qb[l],qb[b])
+                            #qc.z(qb[l])
+
                         qc.rx(-np.pi/2,qb[i])
                         qc.rx(np.pi/2,qb[b])
+
+                        # Pauli-z
+                        for k in range(i+1,j):
+                            qc.cx(qb[k],qb[b])
+                            #qc.z(qb[k])
+                        for l in range(a+1,b):
+                            qc.cx(qb[l],qb[b])
+                            #qc.z(qb[l])
 
                         qc.cx(qb[i],qb[b])
                         qc.cx(qb[j],qb[b])
@@ -297,11 +340,20 @@ class UnitaryCoupledCluster:
                         qc.cx(qb[j],qb[b])
                         qc.cx(qb[i],qb[b])
 
+                        # Pauli-z
+                        for k in range(i+1,j):
+                            qc.cx(qb[k],qb[b])
+                            #qc.z(qb[k])
+                        for l in range(a+1,b):
+                            qc.cx(qb[l],qb[b])
+                            #qc.z(qb[l])
+
                         qc.h(qb[i])
                         qc.h(qb[j])
                         qc.h(qb[a])
                         qc.rx(-np.pi/2,qb[b])
                         qc.h(qb[b])
+
                         
                         t += 1
 
@@ -326,23 +378,25 @@ class UnitaryCoupledCluster:
                             qc = self.dUCCD(qc,qb,qa,theta[rho][t],i,j,a,b)
                             continue
 
-                        # Pauli-z
-                        for k in range(i+1,j):
-                            #qc.u1(np.pi,qb[k]) # Z gate
-                            qc.z(qb[k]) # Z gate
-                        for l in range(a+1,b):
-                            #qc.u1(np.pi,qb[l]) # Z gate
-                            qc.z(qb[l]) # Z gate
-
                         # YXXX
                         #qc.u3(-np.pi/2,-np.pi/2,np.pi/2,qb[i]) # Rx(-pi/2)
-                        qc.rx(-np.pi/2,qb[i]) # Rx(-pi/2)
+                        qc.rx(np.pi/2,qb[i]) # Rx(-pi/2)
                         #qc.u2(0,np.pi/2,qb[j]) # H gate 
                         qc.h(qb[j])
                         #qc.u2(0,np.pi/2,qb[a]) # H gate
                         qc.h(qb[a])
                         #qc.u2(0,np.pi/2,qb[b]) # H gate
                         qc.h(qb[b])
+
+                        ## Pauli-z
+                        #for k in range(i+1,j):
+                        #    #qc.u1(np.pi,qb[k]) # Z gate
+                        #    #qc.z(qb[k]) # Z gate
+                        #    qc.cx(qb[k],qb[b]) # Z gate
+                        #for l in range(a+1,b):
+                        #    #qc.u1(np.pi,qb[l]) # Z gate
+                        #    #qc.z(qb[l]) # Z gate
+                        #    qc.cx(qb[l],qb[b]) # Z gate
 
                         qc.cx(qb[i],qb[b])
                         qc.cx(qb[j],qb[b])
@@ -355,8 +409,18 @@ class UnitaryCoupledCluster:
                         qc.cx(qb[j],qb[b])
                         qc.cx(qb[i],qb[b])
 
+                        ## Pauli-z
+                        #for k in range(i+1,j):
+                        #    #qc.u1(np.pi,qb[k]) # Z gate
+                        #    #qc.z(qb[k]) # Z gate
+                        #    qc.cx(qb[k],qb[b]) # Z gate
+                        #for l in range(a+1,b):
+                        #    #qc.u1(np.pi,qb[l]) # Z gate
+                        #    #qc.z(qb[l]) # Z gate
+                        #    qc.cx(qb[l],qb[b]) # Z gate
+
                         #qc.u3(np.pi/2,-np.pi/2,np.pi/2,qb[i]) # Rx(pi/2)
-                        qc.rx(np.pi/2,qb[i]) # Rx(-pi/2)
+                        qc.rx(-np.pi/2,qb[i]) # Rx(-pi/2)
                         #qc.u2(0,np.pi/2,qb[j]) # H gate 
                         qc.h(qb[j])
                         #qc.u2(0,np.pi/2,qb[a]) # H gate
@@ -377,13 +441,14 @@ class UnitaryCoupledCluster:
         n_qubits = self.l
         n_fermi = self.n
 
-        # Pauli-z
-        for k in range(i+1,a):
-            qc.z(qb[k])
         # Pauli strings
         qc.h(qb[i])
         qc.rx(np.pi/2,qb[i])
         qc.h(qb[a])
+        # Pauli-z
+        for k in range(i+1,a):
+            qc.cx(qb[k],qb[b]) # Z gate
+            #qc.z(qb[k])
 
         qc.cx(qb[i],qb[a])
 
@@ -408,9 +473,14 @@ class UnitaryCoupledCluster:
 
         qc.cx(qb[i],qb[a])
 
+        # Pauli-z
+        for k in range(i+1,a):
+            qc.cx(qb[k],qb[b]) # Z gate
+
         qc.h(qb[i])
         qc.rx(-np.pi/2,qb[a])
         qc.h(qb[a])
+
 
         return qc
 
@@ -425,9 +495,11 @@ class UnitaryCoupledCluster:
 
         # Pauli-z
         for k in range(i+1,j):
-            qc.z(qb[k])
+            qc.cx(qb[k],qb[b]) # Z gate
+            #qc.z(qb[k])
         for l in range(a+1,b):
-            qc.z(qb[l])
+            qc.cx(qb[l],qb[b]) # Z gate
+            #qc.z(qb[l])
 
         # Pauli strings
         qc.h(qb[i])
@@ -562,6 +634,14 @@ class UnitaryCoupledCluster:
         qc.h(qb[a])
         qc.rx(-np.pi/2,qb[b])
         qc.h(qb[b])
+
+        # Pauli-z
+        for k in range(i+1,j):
+            qc.cx(qb[k],qb[b]) # Z gate
+            #qc.z(qb[k])
+        for l in range(a+1,b):
+            qc.cx(qb[l],qb[b]) # Z gate
+            #qc.z(qb[l])
         
         return qc
 

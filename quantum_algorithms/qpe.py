@@ -60,10 +60,10 @@ class QPE(QuantumAlgorithm):
             self.qc.h(self.qb_work[qbit])
 
     def evolve_state(self):
-        #for w in range(self.n_work):
-        for n in range(self.n):
-            #for n in range(self.n):
-            for w in range(self.n_work):
+        for w in range(self.n_work):
+        #for n in range(self.n):
+            for n in range(self.n):
+            #for w in range(self.n_work):
                 theta = (2**w)*self.dt
                 for gate_info in self.circuit_list:
                     gate = gate_info[0]
@@ -90,6 +90,12 @@ class QPE(QuantumAlgorithm):
                                     self.qb_simulation[targ])
                         self.qc.x(self.qb_simulation[targ])
                     else:
+                        #if gate.char == 'H':
+                        #    self.qc.ch(self.qb_work[w],self.qb_simulation[targ])
+                        #elif gate.char == 'Rx':
+                        #    self.qc.crx(gate.phi,self.qb_work[w],self.qb_simulation[targ])
+                        #else:
+                        #    self.qc.append(gate.get_qiskit(),qbit,[])
                         self.qc.append(gate.get_qiskit(),qbit,[])
                 # Insert Emax term
                 self.qc.cu1(theta*self.Emax,
@@ -101,7 +107,7 @@ class QPE(QuantumAlgorithm):
                             self.qb_simulation[0])
                 self.qc.x(self.qb_simulation[0])
 
-    def inverse_fourier_transform(self,swap=False):
+    def inverse_fourier_transform(self,swap=True):
         if swap:
             for i in range(int(self.n_work/2)):
                 self.qc.swap(self.qb_work[i],self.qb_work[self.n_work-i-1])
@@ -120,7 +126,16 @@ class QPE(QuantumAlgorithm):
     def measure(self):
         self.qc.measure(self.qb_work,self.cb_work)
         self.qc.measure(self.qb_simulation,self.cb_simulation)
-        job = qk.execute(self.qc, backend = self.backend, shots=self.shots)
+        job = qk.execute(self.qc, 
+                        backend = self.backend, 
+                        shots=self.shots,
+                        optimization_level=self.optimization_level,
+                        noise_model=self.noise_model,
+                        coupling_map=self.coupling_map,
+                        basis_gates=self.basis_gates,
+                        initial_layout=self.layout,
+                        seed_transpiler=self.seed,
+                        seed_simulator=self.seed)
         #result = job.result().get_counts(self.qc)
         result = job.result()
         if self.meas_fitter != None:
@@ -135,7 +150,7 @@ class QPE(QuantumAlgorithm):
         for key,val in self.result.items():
             key = key[::-1]
             phi,eigenstate = key.split(' ')
-            #phi = phi[::-1]
+            phi = phi[::-1]
             assert len(phi) == self.n_work
             assert len(eigenstate) == self.n_simulation
             psi.append(eigenstate)
@@ -152,17 +167,17 @@ class QPE(QuantumAlgorithm):
         x_ = []
         y_ = []
         for i,xi in enumerate(x):
-            if i > 0:
-                if xi == x_[-1]:
-                    y_[-1] += y[i]
-                else:
-                    x_.append(xi)
-                    y_.append(y[i])
+            if i == 0:
+                x_.append(xi)
+                y_.append(y[i])
+                continue
+            if xi == x_[-1]:
+                y_[-1] += y[i]
             else:
                 x_.append(xi)
                 y_.append(y[i])
         self.x = x_
-        self.y = y_
+        self.y = y_/np.sum(y_)
         return self
 
     def statEig(self,min_measure=15):
