@@ -1,8 +1,8 @@
 import numpy as np
 import qiskit as qk
 
-from attributes import QuantumComputer
-from algorithm import QuantumAlgorithm
+from .attributes import QuantumComputer
+from .algorithm import QuantumAlgorithm
 
 
 class QPE(QuantumAlgorithm):

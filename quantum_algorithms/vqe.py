@@ -1,11 +1,11 @@
 import numpy as np
 import qiskit as qk
 from qiskit.extensions.standard import *
-from tools import print_state,get_state_count
-from ansatz import UnitaryCoupledCluster,RYRZ,RY,RYpairing,UCC5
-from algorithm import QuantumAlgorithm
-from attributes import QuantumComputer
-from optimizers import RyGradient,QuantumGradientDescent
+from .tools import print_state,get_state_count
+from .ansatz import UnitaryCoupledCluster,RYRZ,RY,RYpairing,UCC5
+from .algorithm import QuantumAlgorithm
+from .attributes import QuantumComputer
+from .optimizers import RyGradient,QuantumGradientDescent
 
 class VQE(QuantumAlgorithm):
     def __init__(self,

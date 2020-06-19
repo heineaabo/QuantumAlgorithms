@@ -8,12 +8,13 @@ class SPSA:
     - https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=8005699&tag=1
     """
     def __init__(self,
-                 max_iter=200,
+                 max_iter=500,
                  min_change=0.1,
                  noise_var = 0.01,  # c
                  alpha=0.602,
                  gamma=0.101,
                  feedback=1,
+                 tol=1e-08,
                  grad_avg=0):
         """
         Simultaneous Perturbation Stochastic Approximation.
@@ -51,6 +52,7 @@ class SPSA:
 
         self.feedback = feedback
         self.n_g = grad_avg
+        self.tol = tol
 
     def set_loss_function(self,loss_function):
         self.L = loss_function
@@ -79,6 +81,9 @@ class SPSA:
             
             # Update parameters
             theta = theta - a_k*g
+            if a_k*g < self.tol:
+                print('Converged at iteration {}'.format(k))
+                break
             # Print loss evaluation.
             if k%self.feedback == 0:
                 print('Iteration {}: \u2329E\u232A = {}'.format(k,self.L(theta)))
@@ -92,7 +97,6 @@ class SPSA:
         y_p = self.L(theta + c_k*delta)
         y_m = self.L(theta - c_k*delta)
         gradient = (y_p - y_m)/(2*c_k*delta)
-
         return gradient
 
     def _step_length(self,theta):
