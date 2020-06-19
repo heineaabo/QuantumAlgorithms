@@ -1,5 +1,5 @@
 import numpy as np
-from tools import print_state
+from ..tools import print_state
 
 class QuantumGradientDescent:
     """

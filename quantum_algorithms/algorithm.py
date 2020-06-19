@@ -1,4 +1,4 @@
-from attributes import QuantumComputer
+from .attributes import QuantumComputer
 import qiskit as qk
 
 
