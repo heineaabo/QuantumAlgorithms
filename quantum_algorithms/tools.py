@@ -79,20 +79,3 @@ def print_state(R,n,l,print_all_legal=False):
         if string_illegal != '':
             print('   \u21B3 '+string_illegal)
             print('')
-
-
-# OpenFermion Hamiltonian to circuit_list
-def from_OpenFermion(hamiltonian):
-    circ = []
-    for term in hamiltonian.terms:
-        factor = hamiltonian.terms[term]
-        action = [factor]
-        if len(term) > 0:
-            for i in range(len(term)):
-                qbit = term[i][0]
-                pauli = term[i][1].lower()
-                action.append([qbit,pauli])
-        circ.append(action)
-    return circ
-
-
