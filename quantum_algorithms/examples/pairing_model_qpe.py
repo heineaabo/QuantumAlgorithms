@@ -2,10 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import qiskit as qk
 
-import sys
-sys.path.append('..')
-sys.path.append('/Users/heine2307/Documents/Universitet/UiO/Master/GitHub/QuantumCircuitOptimizer')
-from qpe import QPE
+from quantum_algorithms import QPE
 from quantum_circuit import SecondQuantizedHamiltonian
 
 
@@ -35,18 +32,14 @@ n_work = 6
 Emax = 2
 
 t = 0.49*np.pi
-n = 10
-#dt = 2*np.pi/(Emax-(-3))
+rho = 10
 
 print('Setting up Hamiltonian')
 pairing_model = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs,exp=True)
 print('Setting up QPE class')
-qpe = QPE(pairing_model,pairing_ansatz,n_work,Emax,t=t,n=n)
+qpe = QPE(pairing_model,pairing_ansatz,n_work,Emax,t=t,rho=rho)
 print('Running...')
 qpe.estimate()
-
-#print(qpe.y)
-#print(qpe.x)
 
 plt.plot(qpe.x,qpe.y)
 plt.show()

@@ -1,8 +1,5 @@
 import numpy as np
-import sys
-sys.path.append('..')
-sys.path.append('../../../QuantumCircuitOptimizer')
-from vqe import VQE
+from quantum_algorithms import VQE,Minimizer
 from quantum_circuit import SecondQuantizedHamiltonian
 
 
@@ -24,5 +21,8 @@ for p in range(0,l-1,2):
 
 options = {'seed':1}
 pairing_model = SecondQuantizedHamiltonian(n,l,h_pq,h_pqrs)
-vqe = VQE(pairing_model,ansatz='UCCD',options=options)
+vqe = VQE(pairing_model,Minimizer('cobyla'),ansatz='UCCD',options=options)
 print('Energy expectation value with MP2 parameters:',vqe.expval())
+theta = vqe.optimize()
+mean = vqe.get_mean(theta)
+print('VQE energy:',mean)
